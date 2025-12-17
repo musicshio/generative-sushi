@@ -8,6 +8,7 @@ export type ChatSummary = {
     preview?: string;
     topping?: string;
     base?: string;
+    image?: string;
     updatedAt: number;
 };
 
@@ -52,9 +53,19 @@ export async function listChats(): Promise<ChatSummary[]> {
                     const messages: UIMessage[] = JSON.parse(contents);
                     const firstText = messages
                         .flatMap(m => m.parts)
-                        .find(part => part.type === 'text');
+                        .find(part => (part as any).type === 'text') as any;
+                    const imagePart = messages
+                        .flatMap(m => m.parts)
+                        .find(part =>
+                            (part as any).type === 'tool-createSushi' &&
+                            (part as any).state === 'output-available' &&
+                            (part as any).output?.image
+                        ) as any;
+
+                    const image = imagePart?.output?.image as string | undefined;
+
                     if (firstText && 'text' in firstText) {
-                        const text = firstText.text;
+                        const text = (firstText as any).text as string;
                         preview = text.slice(0, 60);
                         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
                         const baseMatch = text.match(/Base:\s*([^\n]+)/i);
@@ -65,20 +76,29 @@ export async function listChats(): Promise<ChatSummary[]> {
                             preview,
                             topping,
                             base,
+                            image,
                             updatedAt: stats.mtimeMs,
                         };
                     }
-                } catch {
-                    preview = undefined;
-                }
 
-                return {
-                    id,
-                    preview,
-                    topping: undefined,
-                    base: undefined,
-                    updatedAt: stats.mtimeMs,
-                };
+                    return {
+                        id,
+                        preview: undefined,
+                        topping: undefined,
+                        base: undefined,
+                        image,
+                        updatedAt: stats.mtimeMs,
+                    };
+                } catch {
+                    return {
+                        id,
+                        preview: undefined,
+                        topping: undefined,
+                        base: undefined,
+                        image: undefined,
+                        updatedAt: stats.mtimeMs,
+                    };
+                }
             }),
     );
 

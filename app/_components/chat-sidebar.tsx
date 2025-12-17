@@ -18,7 +18,17 @@ export async function ChatSidebar() {
             {chats.map(chat => (
                 <li key={chat.id}>
                     <div className="flex justify-between items-center gap-2 w-full">
-                        <Link href={`/${chat.id}`} className="flex-1">
+                        <Link href={`/${chat.id}`} className="flex-1 flex items-center gap-3">
+                            <div className="avatar">
+                                <div className="w-10 h-10 rounded-full border border-base-300 overflow-hidden bg-base-300">
+                                    {chat.image ? (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img src={chat.image} alt="sushi avatar" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-base-300" />
+                                    )}
+                                </div>
+                            </div>
                             <div className="flex flex-col">
                                 <span className="font-medium text-sm">
                                     {chat.topping ?? 'Topping ?'} × {chat.base ?? 'Base ?'}
