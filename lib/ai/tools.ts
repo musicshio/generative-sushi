@@ -1,19 +1,8 @@
-import { experimental_generateImage as generateImage, generateObject, generateText, tool as createTool} from 'ai';
+import { experimental_generateImage as generateImage, generateObject, tool as createTool } from 'ai';
 import { z } from 'zod';
-import {sushiSchema} from "@/lib/schema/schema";
+import { sushiSchema } from "@/lib/schema/schema";
 
-export const weatherTool = createTool({
-    description: 'Display the weather for a location',
-    inputSchema: z.object({
-        location: z.string().describe('The location to get the weather for'),
-    }),
-    execute: async function ({ location }) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        return { weather: 'Sunny', temperature: 75, location };
-    },
-});
-
-export const sushiTool = createTool({
+export const createSushiTool = createTool({
     description: 'Create a sushi description',
     inputSchema: z.object({
         topping: z.string().describe('The topping of the sushi'),
@@ -33,7 +22,7 @@ Avoid expressions that could violate content or safety guidelines.
         let image: string | undefined = undefined;
         try {
             const result = await generateImage({
-                model: "google/imagen-4.0-fast-generate-001",
+                model: "google/gemini-2.5-flash-image-preview",
                 prompt: `A beautifully lit studio photo of a sushi with topping "${topping}" on base "${base}", on a clean plate, minimal background, kawaii styling`,
                 size: '512x512',
             });
@@ -50,7 +39,29 @@ Avoid expressions that could violate content or safety guidelines.
     },
 });
 
+export const judgeIsSushiTool = createTool({
+    description: 'Judge if the given topping/base can reasonably be considered sushi',
+    inputSchema: z.object({
+        topping: z.string(),
+        base: z.string(),
+        userArguments: z.string().optional(),
+    }),
+    execute: async function ({ topping, base, userArguments }) {
+        const { object } = await generateObject({
+            model: 'anthropic/claude-sonnet-4.5',
+            schema: z.object({
+                isSushi: z.boolean(),
+                reasoning: z.string(),
+            }),
+            system: `You are a new-generation creative sushi classification assistant. Decide if topping/base can plausibly be sushi (including creative/fusion). Be flexible and imaginative; return true only when convinced by a reasonable role-mapping (not strict realism).`,
+            prompt: `Topping: ${topping}\nBase: ${base}\nUser arguments: ${userArguments ?? '(none)'}\nIs this plausibly sushi? Answer briefly and logically in Japanese`,
+        });
+
+        return object;
+    },
+});
+
 export const tools = {
-    displayWeather: weatherTool,
-    createSushi: sushiTool,
+    createSushi: createSushiTool,
+    judgeIsSushi: judgeIsSushiTool,
 };

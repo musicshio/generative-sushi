@@ -39,6 +39,9 @@ export async function listChats(): Promise<ChatSummary[]> {
     const chatDir = ensureChatDir();
     const files = await readdir(chatDir);
 
+    type TextPart = Extract<UIMessage['parts'][number], { type: 'text'; text: string }>;
+    type CreateSushiPart = Extract<UIMessage['parts'][number], { type: 'tool-createSushi' }>;
+
     const chats = await Promise.all(
         files
             .filter(file => file.endsWith('.json'))
@@ -53,19 +56,20 @@ export async function listChats(): Promise<ChatSummary[]> {
                     const messages: UIMessage[] = JSON.parse(contents);
                     const firstText = messages
                         .flatMap(m => m.parts)
-                        .find(part => (part as any).type === 'text') as any;
+                        .find((part): part is TextPart => part.type === 'text');
                     const imagePart = messages
                         .flatMap(m => m.parts)
-                        .find(part =>
-                            (part as any).type === 'tool-createSushi' &&
-                            (part as any).state === 'output-available' &&
-                            (part as any).output?.image
-                        ) as any;
+                        .find(
+                            (part): part is CreateSushiPart =>
+                                part.type === 'tool-createSushi' &&
+                                part.state === 'output-available' &&
+                                !!part.output?.image,
+                        );
 
-                    const image = imagePart?.output?.image as string | undefined;
+                    const image = imagePart?.output?.image;
 
-                    if (firstText && 'text' in firstText) {
-                        const text = (firstText as any).text as string;
+                    if (firstText) {
+                        const text = firstText.text;
                         preview = text.slice(0, 60);
                         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
                         const baseMatch = text.match(/Base:\s*([^\n]+)/i);
