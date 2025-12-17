@@ -1,11 +1,13 @@
 import { generateId, UIMessage } from 'ai';
 import { existsSync, mkdirSync, statSync } from 'fs';
-import { readdir, readFile, writeFile } from 'fs/promises';
+import { readdir, readFile, writeFile, unlink } from 'fs/promises';
 import path from 'path';
 
 export type ChatSummary = {
     id: string;
     preview?: string;
+    topping?: string;
+    base?: string;
     updatedAt: number;
 };
 
@@ -23,6 +25,13 @@ export async function createChat(): Promise<string> {
 
 export async function saveChat({ chatId, messages }: { chatId: string; messages: UIMessage[] }) {
     await writeFile(getChatFile(chatId), JSON.stringify(messages, null, 2));
+}
+
+export async function deleteChat(id: string) {
+    const file = getChatFile(id);
+    if (existsSync(file)) {
+        await unlink(file);
+    }
 }
 
 export async function listChats(): Promise<ChatSummary[]> {
@@ -45,7 +54,19 @@ export async function listChats(): Promise<ChatSummary[]> {
                         .flatMap(m => m.parts)
                         .find(part => part.type === 'text');
                     if (firstText && 'text' in firstText) {
-                        preview = firstText.text.slice(0, 60);
+                        const text = firstText.text;
+                        preview = text.slice(0, 60);
+                        const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
+                        const baseMatch = text.match(/Base:\s*([^\n]+)/i);
+                        const topping = toppingMatch?.[1]?.trim();
+                        const base = baseMatch?.[1]?.trim();
+                        return {
+                            id,
+                            preview,
+                            topping,
+                            base,
+                            updatedAt: stats.mtimeMs,
+                        };
                     }
                 } catch {
                     preview = undefined;
@@ -54,6 +75,8 @@ export async function listChats(): Promise<ChatSummary[]> {
                 return {
                     id,
                     preview,
+                    topping: undefined,
+                    base: undefined,
                     updatedAt: stats.mtimeMs,
                 };
             }),
