@@ -1,9 +1,24 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Hina_Mincho, Geist_Mono, Mochiy_Pop_One, Shippori_Antique } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+import { ChatSidebar } from "@/app/_components/chat-sidebar";
+
+const hinaMincho = Hina_Mincho({
+  variable: "--font-hina-mincho",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const mochiyPop = Mochiy_Pop_One({
+  variable: "--font-mochiy-pop",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const shipporiAntique = Shippori_Antique({
+  variable: "--font-shippori-antique",
+  weight: "400",
   subsets: ["latin"],
 });
 
@@ -24,16 +39,43 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-        <body
-            className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-            <div className="navbar bg-base-100 shadow-sm">
-                <div className="flex-1">
-                    <a className="btn btn-ghost text-xl">Generative sUshI</a>
-                </div>
+      <body
+        className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased`}
+      >
+        <div className="drawer lg:drawer-open min-h-screen">
+          <input id="app-drawer" type="checkbox" className="drawer-toggle" />
+          <div className="drawer-content flex flex-col">
+            <div className="navbar bg-base-100 shadow-sm lg:hidden">
+              <div className="flex-none">
+                <label htmlFor="app-drawer" className="btn btn-ghost btn-square">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
+                       viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </label>
+              </div>
             </div>
-            {children}
-        </body>
+            <main className="p-4">{children}</main>
+          </div>
+          <div className="drawer-side">
+            <label htmlFor="app-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
+            <aside className="min-h-full w-80 bg-base-200 p-4">
+              <div className="flex items-center justify-between mb-4">
+                <a href="/" className="text-xl font-semibold">Generative sUshI</a>
+                <label htmlFor="app-drawer" className="btn btn-ghost btn-square lg:hidden">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
+                       viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                          d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </label>
+              </div>
+              <ChatSidebar />
+            </aside>
+          </div>
+        </div>
+      </body>
     </html>
   );
 }

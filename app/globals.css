@@ -4,3 +4,7 @@
 @plugin "daisyui" {
     themes: nord --default, abyss --prefersdark, cupcake, dracula;
 }
+
+body {
+    font-family: var(--font-shippori-antique), serif;
+}

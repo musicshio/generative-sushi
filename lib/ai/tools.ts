@@ -23,7 +23,10 @@ export const sushiTool = createTool({
         const { object } = await generateObject({
             model: 'anthropic/claude-sonnet-4.5',
             schema: sushiSchema,
-            system: 'You are a sushi chef writing concise, mouthwatering menu blurbs.',
+            system: `You are a sushi chef writing concise, mouthwatering menu blurbs.
+Some items may be conceptual and not real-world sushi.
+Avoid expressions that could violate content or safety guidelines.
+`,
             prompt: `Topping: ${topping}\nBase: ${base}\nWrite a wikipedia article describing this sushi in Japanese.`,
         });
 
