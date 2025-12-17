@@ -3,6 +3,7 @@ import { Hina_Mincho, Geist_Mono, Mochiy_Pop_One, Shippori_Antique } from "next/
 import "./globals.css";
 
 import { ChatSidebar } from "@/app/_components/chat-sidebar";
+import Link from "next/link";
 
 const hinaMincho = Hina_Mincho({
   variable: "--font-hina-mincho",
@@ -62,7 +63,7 @@ export default function RootLayout({
             <label htmlFor="app-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
             <aside className="min-h-full w-80 bg-base-200 p-4">
               <div className="flex items-center justify-between mb-4">
-                <a href="/" className="text-xl font-semibold">Generative sUshI</a>
+                <Link href="/" className="text-xl font-semibold">Generative sUshI</Link>
                 <label htmlFor="app-drawer" className="btn btn-ghost btn-square lg:hidden">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
                        viewBox="0 0 24 24" stroke="currentColor">

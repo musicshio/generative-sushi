@@ -5,6 +5,7 @@ export const sushiSchema = z.object({
     base: z.string().describe('The base of the sushi'),
     title: z.string().describe('The title of the sushi'),
     description: z.string().describe('A short description of the sushi'),
+    image: z.string().optional().describe('Data URL for a generated sushi image'),
     etymology: z.object({
         label: z.string(),
         description: z.string(),

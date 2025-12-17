@@ -12,6 +12,7 @@ export const Sushi = ({
     etymology,
     recipe,
     history,
+    image,
 }: SushiProps) => {
     return (
         <div className="card bg-base-100 shadow-md border border-base-200">
@@ -20,7 +21,17 @@ export const Sushi = ({
                     <span className="badge badge-primary badge-outline">Topping: {topping}</span>
                     <span className="badge badge-secondary badge-outline">Base: {base}</span>
                 </div>
-                <div>
+                <div className="relative">
+                    {image && (
+                        <div className="md:float-right md:ml-6 md:w-56 w-full mb-4 md:mb-2">
+                            <img
+                                src={image}
+                                alt={`${topping} on ${base}`}
+                                className="w-full rounded-xl object-cover border border-base-200 shadow-sm"
+                            />
+                            <p className="text-xs text-base-content/70 mt-2 text-center">イメージ画像</p>
+                        </div>
+                    )}
                     <h2 className="card-title">{title}</h2>
                     <p className="text-base-content/80">{description}</p>
                 </div>

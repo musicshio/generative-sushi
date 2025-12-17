@@ -1,4 +1,4 @@
-import {generateObject, generateText, tool as createTool} from 'ai';
+import { experimental_generateImage as generateImage, generateObject, generateText, tool as createTool} from 'ai';
 import { z } from 'zod';
 import {sushiSchema} from "@/lib/schema/schema";
 
@@ -30,7 +30,23 @@ Avoid expressions that could violate content or safety guidelines.
             prompt: `Topping: ${topping}\nBase: ${base}\nWrite a wikipedia article describing this sushi in Japanese.`,
         });
 
-        return object;
+        let image: string | undefined = undefined;
+        try {
+            const result = await generateImage({
+                model: "google/imagen-4.0-fast-generate-001",
+                prompt: `A beautifully lit studio photo of a sushi with topping "${topping}" on base "${base}", on a clean plate, minimal background, kawaii styling`,
+                size: '512x512',
+            });
+            const generated = result.images?.[0];
+            if (generated?.base64) {
+                const mediaType = generated.mediaType || 'image/png';
+                image = `data:${mediaType};base64,${generated.base64}`;
+            }
+        } catch (err) {
+            console.error('Image generation failed', err);
+        }
+
+        return { ...object, image };
     },
 });
 
