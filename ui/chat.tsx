@@ -12,7 +12,7 @@ export default function Chat({
     const [input, setInput] = useState('');
     const [pendingGenerate, setPendingGenerate] = useState(false);
     const [pendingRebuttal, setPendingRebuttal] = useState(false);
-    const { messages, sendMessage } = useChat({
+    const { messages, sendMessage, } = useChat({
         id,
         messages: initialMessages,
         transport: new DefaultChatTransport({
@@ -58,10 +58,21 @@ export default function Chat({
         [messages],
     );
 
+    const extractMetadataFromText = (text: string) => {
+        const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
+        const baseMatch = text.match(/Base:\s*([^\n]+)/i);
+        if (!toppingMatch && !baseMatch) return null;
+        return {
+            topping: toppingMatch?.[1]?.trim(),
+            base: baseMatch?.[1]?.trim(),
+        };
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!input.trim()) return;
-        sendMessage({ text: input });
+        const meta = extractMetadataFromText(input);
+        sendMessage({ text: input, metadata: meta && messages.length === 0 ? meta : undefined });
         setInput('');
     };
 
@@ -96,7 +107,9 @@ export default function Chat({
             if (last) {
                 try {
                     const parsed = JSON.parse(last);
-                    const part = parsed.message?.parts?.find((p: any) => p.type === 'text');
+                    const part = parsed.message?.parts?.find(
+                        (p: { type?: string; text?: string }) => p?.type === 'text',
+                    );
                     rebuttal = part?.text ?? '';
                 } catch {
                     rebuttal = '';
@@ -127,72 +140,76 @@ export default function Chat({
     };
 
     return (
-        <div className="space-y-6">
-            <div className="space-y-4">
-                {messages.map(message => (
-                    <div
-                        key={message.id}
-                        className="border border-base-200 rounded-xl p-4 bg-base-100 shadow-sm"
-                    >
-                        <div className="text-xs uppercase tracking-wide text-base-content/60 mb-2">
-                            {message.role === 'user' ? 'User' : 'AI'}
-                        </div>
-                        <div className="space-y-3 text-base-content">
-                            {message.parts.map((part, index) => {
-                                if (part.type === 'text') {
-                                    return <p key={index}>{part.text}</p>;
-                                }
+        <div className="flex flex-col gap-4 min-h-[calc(100vh-7rem)]">
+            <div className="flex-1 overflow-y-auto pr-1">
+                <div className="space-y-3">
+                    {messages.map(message => {
+                        const isUser = message.role === 'user';
+                        return (
+                            <div key={message.id} className={`chat ${isUser ? 'chat-end' : 'chat-start'}`}>
+                                <div className="chat-header">
+                                    {isUser ? 'You' : 'AI'}
+                                </div>
+                                <div className="chat-bubble whitespace-pre-wrap">
+                                    {message.parts.map((part, index) => {
+                                        if (part.type === 'text') {
+                                            return <p key={index}>{part.text}</p>;
+                                        }
 
-                                if (part.type === 'tool-judgeIsSushi') {
-                                    if (part.state === 'output-available' && part.output) {
-                                        return (
-                                            <div key={index} className="alert alert-info">
-                                                <div>
-                                                    <div className="font-semibold">
-                                                        判定: {part.output.isSushi ? '寿司として成立' : '寿司ではない'}
+                                        if (part.type === 'tool-judgeIsSushi') {
+                                            if (part.state === 'output-available' && part.output) {
+                                                return (
+                                                    <div key={index} className="text-sm space-y-1">
+                                                        <div className="font-semibold">
+                                                            判定: {part.output.isSushi ? '寿司として成立' : '寿司ではない'}
+                                                        </div>
+                                                        <div>{part.output.reasoning}</div>
                                                     </div>
-                                                    <div className="text-sm">{part.output.reasoning}</div>
+                                                );
+                                            }
+                                            if (part.state === 'output-error') {
+                                                return (
+                                                    <div key={index} className="text-sm text-error">
+                                                        判定に失敗しました: {part.errorText}
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div key={index} className="text-sm text-base-content/70">
+                                                    判定中...
                                                 </div>
-                                            </div>
-                                        );
-                                    }
-                                    if (part.state === 'output-error') {
-                                        return (
-                                            <div key={index} className="alert alert-error">
-                                                判定に失敗しました: {part.errorText}
-                                            </div>
-                                        );
-                                    }
-                                    return (
-                                        <div key={index} className="text-base-content/70">
-                                            判定中...
-                                        </div>
-                                    );
-                                }
+                                            );
+                                        }
 
-                                if (part.type === 'tool-createSushi') {
-                                    if (part.state === 'output-available' && part.output) {
-                                        return <Sushi key={index} {...part.output} />;
-                                    }
-                                    if (part.state === 'output-error') {
-                                        return (
-                                            <div key={index} className="alert alert-error">
-                                                生成に失敗しました: {part.errorText}
-                                            </div>
-                                        );
-                                    }
-                                    return (
-                                        <div key={index} className="text-base-content/70">
-                                            生成中...
-                                        </div>
-                                    );
-                                }
+                                        if (part.type === 'tool-createSushi') {
+                                            if (part.state === 'output-available' && part.output) {
+                                                return (
+                                                    <div key={index} className="mt-3">
+                                                        <Sushi {...part.output} />
+                                                    </div>
+                                                );
+                                            }
+                                            if (part.state === 'output-error') {
+                                                return (
+                                                    <div key={index} className="text-sm text-error">
+                                                        生成に失敗しました: {part.errorText}
+                                                    </div>
+                                                );
+                                            }
+                                            return (
+                                                <div key={index} className="text-sm text-base-content/70">
+                                                    生成中...
+                                                </div>
+                                            );
+                                        }
 
-                                return null;
-                            })}
-                        </div>
-                    </div>
-                ))}
+                                        return null;
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
             </div>
 
             {!hasSushiOutput && lastPositiveJudge && (
@@ -206,7 +223,7 @@ export default function Chat({
                                 type="button"
                                 className="btn btn-primary"
                                 onClick={handleGenerateClick}
-                                disabled={pendingGenerate || isLoading}
+                                disabled={pendingGenerate}
                             >
                                 {pendingGenerate ? 'Generating...' : '生成する'}
                             </button>
@@ -215,11 +232,11 @@ export default function Chat({
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="card bg-base-100 shadow-md border border-base-200">
+            <form onSubmit={handleSubmit} className="card bg-base-100 shadow-md border border-base-200 sticky bottom-0">
                 <div className="card-body gap-4">
                     <textarea
                         className="textarea textarea-bordered w-full"
-                        placeholder="メッセージを入力して議論を続けよう..."
+                        placeholder="反論しよう！！"
                         value={input}
                         onChange={e => setInput(e.target.value)}
                         rows={3}

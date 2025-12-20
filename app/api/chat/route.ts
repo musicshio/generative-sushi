@@ -1,6 +1,8 @@
 import { streamText, convertToModelMessages, UIMessage, validateUIMessages } from 'ai';
 import { tools } from '@/lib/ai/tools';
-import {loadChat, saveChat} from '@/util/chat-store';
+import { loadChat, saveChat } from '@/util/chat-store';
+import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 
 const systemPrompt = `You are a strict sushi gatekeeper assistant.
 - Always first judge if topping/base can be considered sushi by calling the "judgeIsSushi" tool.
@@ -21,12 +23,14 @@ export async function POST(request: Request) {
     // Append new message to previousMessages messages
     const messages = [...previousMessages, message];
 
-
     // Append new message to previousMessages messages
     const validatedMessages = await validateUIMessages({
         messages,
         tools, // Ensures tool calls in messages match current schemas
-    });
+    }).catch((err) => {
+        console.error('Message validation error:', JSON.stringify(err, null, 2));
+        throw err;
+    })
 
     const result = streamText({
         model: 'openai/gpt-5-mini',
@@ -39,6 +43,7 @@ export async function POST(request: Request) {
         originalMessages: messages,
         onFinish: ({ messages }) => {
             saveChat({ chatId: id, messages });
+            revalidatePath(`/${id}`);
         },
     });
 }

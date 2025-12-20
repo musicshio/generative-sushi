@@ -45,7 +45,7 @@ export default function RootLayout({
       >
         <div className="drawer lg:drawer-open min-h-screen">
           <input id="app-drawer" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-content flex flex-col">
+          <div className="drawer-content flex flex-col min-h-screen">
             <div className="navbar bg-base-100 shadow-sm lg:hidden">
               <div className="flex-none">
                 <label htmlFor="app-drawer" className="btn btn-ghost btn-square">

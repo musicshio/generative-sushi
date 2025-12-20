@@ -1,9 +1,10 @@
 import { experimental_generateImage as generateImage, generateObject, tool as createTool } from 'ai';
 import { z } from 'zod';
 import { sushiSchema } from "@/lib/schema/schema";
+import {revalidatePath} from "next/cache";
 
 export const createSushiTool = createTool({
-    description: 'Create a sushi description',
+    description: 'If sushi-judge is true, then create a sushi description',
     inputSchema: z.object({
         topping: z.string().describe('The topping of the sushi'),
         base: z.string().describe('The base of the sushi'),
@@ -22,8 +23,8 @@ Avoid expressions that could violate content or safety guidelines.
         let image: string | undefined = undefined;
         try {
             const result = await generateImage({
-                model: "google/gemini-2.5-flash-image-preview",
-                prompt: `A beautifully lit studio photo of a sushi with topping "${topping}" on base "${base}", on a clean plate, minimal background, kawaii styling`,
+                model: "google/imagen-4.0-fast-generate-001",
+                prompt: `A beautifully lit studio photo of a sushi with topping "${topping}" on base "${base}", on a clean plate, minimal background, kawaii styling. Details: ${JSON.stringify(object, null, 2)}`,
                 size: '512x512',
             });
             const generated = result.images?.[0];

@@ -54,6 +54,7 @@ export async function listChats(): Promise<ChatSummary[]> {
 
                 try {
                     const messages: UIMessage[] = JSON.parse(contents);
+                    const firstMessage = messages[0];
                     const firstText = messages
                         .flatMap(m => m.parts)
                         .find((part): part is TextPart => part.type === 'text');
@@ -67,14 +68,16 @@ export async function listChats(): Promise<ChatSummary[]> {
                         );
 
                     const image = imagePart?.output?.image;
+                    const metaTopping = firstMessage?.metadata && (firstMessage.metadata as { topping?: string }).topping;
+                    const metaBase = firstMessage?.metadata && (firstMessage.metadata as { base?: string }).base;
 
                     if (firstText) {
                         const text = firstText.text;
                         preview = text.slice(0, 60);
                         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
                         const baseMatch = text.match(/Base:\s*([^\n]+)/i);
-                        const topping = toppingMatch?.[1]?.trim();
-                        const base = baseMatch?.[1]?.trim();
+                        const topping = metaTopping ?? toppingMatch?.[1]?.trim();
+                        const base = metaBase ?? baseMatch?.[1]?.trim();
                         return {
                             id,
                             preview,
@@ -88,8 +91,8 @@ export async function listChats(): Promise<ChatSummary[]> {
                     return {
                         id,
                         preview: undefined,
-                        topping: undefined,
-                        base: undefined,
+                        topping: metaTopping,
+                        base: metaBase,
                         image,
                         updatedAt: stats.mtimeMs,
                     };

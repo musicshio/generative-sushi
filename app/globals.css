@@ -2,7 +2,7 @@
 @plugin "daisyui";
 
 @plugin "daisyui" {
-    themes: nord --default, abyss --prefersdark, cupcake, dracula;
+    themes: nord --default, nord --prefersdark, cupcake, dracula;
 }
 
 body {
