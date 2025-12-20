@@ -1,6 +1,9 @@
 
+'use client';
+
 import { z } from 'zod';
-import {sushiSchema} from "@/lib/schema/schema";
+import { sushiSchema } from "@/lib/schema/schema";
+import OpfsImage from '@/ui/opfs-image';
 
 type SushiProps = z.infer<typeof sushiSchema>;
 
@@ -17,16 +20,16 @@ export const Sushi = ({
     return (
         <div className={"p-2 md:p-4 lg:p-6"}>
             <div className="relative">
-                {image && (
-                    <div className="md:float-right md:ml-6 md:w-56 w-full mb-4 md:mb-2">
-                        <img
-                            src={image}
-                            alt={`${topping} on ${base}`}
-                            className="w-full rounded-xl object-cover border border-base-200 shadow-sm"
-                        />
-                        <p className="text-xs text-base-content/70 mt-2 text-center">イメージ画像</p>
-                    </div>
-                )}
+                    {image && (
+                        <div className="md:float-right md:ml-6 md:w-56 w-full mb-4 md:mb-2">
+                            <OpfsImage
+                                path={image}
+                                alt={`${topping} on ${base}`}
+                                className="w-full rounded-xl object-cover border border-base-200 shadow-sm"
+                            />
+                            <p className="text-xs text-base-content/70 mt-2 text-center">イメージ画像</p>
+                        </div>
+                    )}
                 <h2 className="card-title">{title}</h2>
                 <p className="text-base-content/80">{description}</p>
             </div>

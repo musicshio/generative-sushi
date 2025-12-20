@@ -36,7 +36,7 @@ export default function SushiDetail({
     useEffect(() => {
         if (!hydrated) return;
         if (messages.length === 0) return;
-        saveChat(id, messages);
+        void saveChat(id, messages);
     }, [hydrated, id, messages]);
 
     useEffect(() => {

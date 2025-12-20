@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { deleteChat, listChats, subscribeToChatChanges, type ChatSummary } from '@/util/local-chat-store';
+import OpfsImage from '@/ui/opfs-image';
 
 export function ChatSidebar() {
     const [chats, setChats] = useState<ChatSummary[]>([]);
@@ -27,9 +28,12 @@ export function ChatSidebar() {
                         <Link href={`/${chat.id}`} className="flex-1 flex items-center gap-3">
                             <div className="avatar">
                                 <div className="w-10 h-10 rounded-full border border-base-300 overflow-hidden bg-base-300">
-                                    {chat.image ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img src={chat.image} alt="sushi avatar" className="w-full h-full object-cover" />
+                                    {chat.imagePath ? (
+                                        <OpfsImage
+                                            path={chat.imagePath}
+                                            alt="sushi avatar"
+                                            className="w-full h-full object-cover"
+                                        />
                                     ) : (
                                         <div className="w-full h-full bg-base-300" />
                                     )}

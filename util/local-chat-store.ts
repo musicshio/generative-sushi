@@ -1,11 +1,12 @@
 import { UIMessage, generateId } from 'ai';
+import { buildOpfsImagePath, isDataUrl, isOpfsPath, saveImageDataUrl } from '@/util/opfs';
 
 export type ChatSummary = {
     id: string;
     preview?: string;
     topping?: string;
     base?: string;
-    image?: string;
+    imagePath?: string;
     updatedAt: number;
 };
 
@@ -52,7 +53,7 @@ function extractSummary(messages: UIMessage[]): Omit<ChatSummary, 'id' | 'update
                 !!part.output?.image,
         );
 
-    const image = imagePart?.output?.image;
+    const imagePath = imagePart?.output?.image;
     const metaTopping = firstMessage?.metadata && (firstMessage.metadata as { topping?: string }).topping;
     const metaBase = firstMessage?.metadata && (firstMessage.metadata as { base?: string }).base;
     let preview: string | undefined;
@@ -75,7 +76,7 @@ function extractSummary(messages: UIMessage[]): Omit<ChatSummary, 'id' | 'update
         preview,
         topping,
         base,
-        image,
+        imagePath,
     };
 }
 
@@ -95,10 +96,11 @@ export function loadChat(id: string): UIMessage[] {
     }
 }
 
-export function saveChat(id: string, messages: UIMessage[]) {
+export async function saveChat(id: string, messages: UIMessage[]) {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(getChatKey(id), JSON.stringify(messages));
-    const summary = extractSummary(messages);
+    const processed = await replaceImagesWithOpfs(id, messages);
+    window.localStorage.setItem(getChatKey(id), JSON.stringify(processed));
+    const summary = extractSummary(processed);
     const updatedAt = Date.now();
     const list = readChatList();
     const next = [
@@ -119,6 +121,33 @@ export function deleteChat(id: string) {
 export function listChats(): ChatSummary[] {
     if (typeof window === 'undefined') return [];
     return readChatList().sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+async function replaceImagesWithOpfs(id: string, messages: UIMessage[]) {
+    const cloned = structuredClone(messages) as UIMessage[];
+    for (const message of cloned) {
+        for (let index = 0; index < message.parts.length; index += 1) {
+            const part = message.parts[index];
+            if (
+                part.type === 'tool-createSushi' &&
+                part.state === 'output-available' &&
+                part.output?.image &&
+                typeof part.output.image === 'string'
+            ) {
+                const image = part.output.image;
+                if (isOpfsPath(image) || !isDataUrl(image)) {
+                    continue;
+                }
+                const key = `${message.id}-${index}`;
+                const path = buildOpfsImagePath(id, key, image);
+                const savedPath = await saveImageDataUrl(path, image);
+                if (savedPath) {
+                    part.output.image = savedPath;
+                }
+            }
+        }
+    }
+    return cloned;
 }
 
 export function subscribeToChatChanges(handler: () => void) {
