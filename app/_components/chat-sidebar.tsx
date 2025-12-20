@@ -1,9 +1,18 @@
-import Link from 'next/link';
-import { listChats } from '@/util/chat-store';
-import { ChatDeleteButton } from './chat-delete-button';
+'use client';
 
-export async function ChatSidebar() {
-    const chats = await listChats();
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { deleteChat, listChats, subscribeToChatChanges, type ChatSummary } from '@/util/local-chat-store';
+
+export function ChatSidebar() {
+    const [chats, setChats] = useState<ChatSummary[]>([]);
+
+    useEffect(() => {
+        setChats(listChats());
+        return subscribeToChatChanges(() => {
+            setChats(listChats());
+        });
+    }, []);
 
     return (
         <ul className="menu bg-base-200 rounded-box w-full">
@@ -38,7 +47,18 @@ export async function ChatSidebar() {
                             </button>
                             <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box shadow p-2 w-40 z-10">
                                 <li>
-                                    <ChatDeleteButton chatId={chat.id} />
+                                    <button
+                                        type="button"
+                                        className="text-error"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            const confirmed = window.confirm('このチャットを削除しますか？');
+                                            if (!confirmed) return;
+                                            deleteChat(chat.id);
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
                                 </li>
                             </ul>
                         </div>

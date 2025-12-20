@@ -1,7 +1,5 @@
 import { streamText, convertToModelMessages, UIMessage, validateUIMessages } from 'ai';
 import { tools } from '@/lib/ai/tools';
-import { loadChat, saveChat } from '@/util/chat-store';
-import { revalidatePath } from 'next/cache';
 
 const systemPrompt = `You are a strict sushi gatekeeper assistant.
 - Always first judge if topping/base can be considered sushi by calling the "judgeIsSushi" tool.
@@ -11,20 +9,15 @@ const systemPrompt = `You are a strict sushi gatekeeper assistant.
 
 export async function POST(request: Request) {
     const req = await request.json();
-    const { id, message } = req as {
-        id: string;
-        message: UIMessage;
+    const { messages, message } = req as {
+        id?: string;
+        messages?: UIMessage[];
+        message?: UIMessage;
     };
+    const inputMessages = messages ?? (message ? [message] : []);
 
-    // Load previous messages from database
-    const previousMessages = await loadChat(id);
-
-    // Append new message to previousMessages messages
-    const messages = [...previousMessages, message];
-
-    // Append new message to previousMessages messages
     const validatedMessages = await validateUIMessages({
-        messages,
+        messages: inputMessages,
         tools, // Ensures tool calls in messages match current schemas
     }).catch((err) => {
         console.error('Message validation error:', JSON.stringify(err, null, 2));
@@ -39,10 +32,6 @@ export async function POST(request: Request) {
     });
 
     return result.toUIMessageStreamResponse({
-        originalMessages: messages,
-        onFinish: ({ messages }) => {
-            saveChat({ chatId: id, messages });
-            revalidatePath(`/${id}`);
-        },
+        originalMessages: inputMessages,
     });
 }

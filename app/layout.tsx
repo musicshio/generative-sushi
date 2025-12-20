@@ -43,7 +43,7 @@ export default function RootLayout({
       <body
         className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased h-dvh`}
       >
-        <div className="drawer lg:drawer-open min-h-screen" overscroll-none>
+        <div className="drawer lg:drawer-open min-h-screen overscroll-none">
           <input id="app-drawer" type="checkbox" className="drawer-toggle" />
           <div className="drawer-content flex flex-col min-h-screen">
             <div className="navbar bg-base-100 shadow-sm lg:hidden">

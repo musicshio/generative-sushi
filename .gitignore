@@ -43,3 +43,6 @@ next-env.d.ts
 .idea
 
 .chats
+.env*.local
+
+/generated/prisma

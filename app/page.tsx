@@ -18,10 +18,7 @@ export default function Page() {
         setError(null);
 
         try {
-            const createRes = await fetch('/api/create-chat', { method: 'POST' });
-            if (!createRes.ok) throw new Error('Failed to create chat');
-            const { id } = await createRes.json();
-
+            const id = generateId();
             const message: UIMessage = {
                 id: generateId(),
                 role: 'user',
@@ -29,21 +26,13 @@ export default function Page() {
                 parts: [{ type: 'text', text: `Topping: ${topping}\nBase: ${base}` }],
             };
 
-            const chatRes = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, message }),
-            });
-
-            if (!chatRes.ok) throw new Error('Failed to send first message');
-
-            const reader = chatRes.body?.getReader();
-            if (reader) {
-                while (true) {
-                    const { done } = await reader.read();
-                    if (done) break;
-                }
-            }
+            window.sessionStorage.setItem(
+                `sushi:chat:pending:${id}`,
+                JSON.stringify({
+                    text: message.parts[0].type === 'text' ? message.parts[0].text : '',
+                    metadata: message.metadata as { topping?: string; base?: string },
+                }),
+            );
 
             router.push(`/${id}`);
         } catch (err) {

@@ -2,30 +2,58 @@
 
 import { UIMessage, useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Sushi } from '@/components/sushi';
 import ChatContent from '@/app/[id]/_components/chat-content';
+import { loadChat, saveChat } from '@/util/local-chat-store';
 
 export type SushiDetailProps = {
     id: string;
-    initialMessages: UIMessage[];
 }
 
 export default function SushiDetail({
                                  id,
-                                 initialMessages,
                              }: SushiDetailProps) {
-    const { messages, sendMessage, } = useChat({
+    const [hydrated, setHydrated] = useState(false);
+    const { messages, sendMessage, setMessages } = useChat({
         id,
-        messages: initialMessages,
         transport: new DefaultChatTransport({
             api: '/api/chat',
-            // only send the last message to the server:
             prepareSendMessagesRequest({ messages, id }) {
-                return { body: { message: messages[messages.length - 1], id } };
+                return { body: { messages, id } };
             },
         }),
     });
+
+    useEffect(() => {
+        const stored = loadChat(id);
+        if (stored.length > 0) {
+            setMessages(stored);
+        }
+        setHydrated(true);
+    }, [id, setMessages]);
+
+    useEffect(() => {
+        if (!hydrated) return;
+        if (messages.length === 0) return;
+        saveChat(id, messages);
+    }, [hydrated, id, messages]);
+
+    useEffect(() => {
+        if (!hydrated) return;
+        const pendingKey = `sushi:chat:pending:${id}`;
+        const raw = window.sessionStorage.getItem(pendingKey);
+        if (!raw) return;
+        window.sessionStorage.removeItem(pendingKey);
+        try {
+            const pending = JSON.parse(raw) as { text: string; metadata?: { topping?: string; base?: string } };
+            if (pending?.text) {
+                sendMessage({ text: pending.text, metadata: pending.metadata });
+            }
+        } catch {
+            return;
+        }
+    }, [hydrated, id, sendMessage]);
 
     type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
 
