@@ -1,62 +1,30 @@
 'use client';
 
-import { UIMessage, useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
-import { useMemo, useState } from 'react';
-import { Sushi } from '@/components/sushi';
+import type { UIMessage } from '@ai-sdk/react';
+import { useState } from 'react';
 
-export default function Chat({
-                                 id,
-                                 initialMessages,
-                             }: { id?: string | undefined; initialMessages?: UIMessage[] } = {}) {
+type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
+
+type ChatContentProps = {
+    className?: string;
+    id?: string;
+    messages: UIMessage[];
+    hasSushiOutput: boolean;
+    lastPositiveJudge?: JudgePart;
+    sendMessage: (message: { text: string; metadata?: { topping?: string; base?: string } }) => Promise<void> | void;
+};
+
+export default function ChatContent({
+    className,
+    id,
+    messages,
+    hasSushiOutput,
+    lastPositiveJudge,
+    sendMessage,
+}: ChatContentProps) {
     const [input, setInput] = useState('');
     const [pendingGenerate, setPendingGenerate] = useState(false);
     const [pendingRebuttal, setPendingRebuttal] = useState(false);
-    const { messages, sendMessage, } = useChat({
-        id,
-        messages: initialMessages,
-        transport: new DefaultChatTransport({
-            api: '/api/chat',
-            // only send the last message to the server:
-            prepareSendMessagesRequest({ messages, id }) {
-                return { body: { message: messages[messages.length - 1], id } };
-            },
-        }),
-    });
-
-    type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
-
-    const judgeParts: JudgePart[] = useMemo(
-        () =>
-            messages
-                .flatMap(m => m.parts)
-                .filter(
-                    (part): part is JudgePart =>
-                        part.type === 'tool-judgeIsSushi',
-                ),
-        [messages],
-    );
-
-    const lastPositiveJudge = useMemo(
-        () =>
-            judgeParts
-                .filter(part => part.state === 'output-available' && part.output && part.output.isSushi)
-                .pop(),
-        [judgeParts],
-    );
-
-    const hasSushiOutput = useMemo(
-        () =>
-            messages.some(m =>
-                m.parts.some(
-                    part =>
-                        part.type === 'tool-createSushi' &&
-                        part.state === 'output-available' &&
-                        part.output,
-                ),
-            ),
-        [messages],
-    );
 
     const extractMetadataFromText = (text: string) => {
         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
@@ -140,20 +108,31 @@ export default function Chat({
     };
 
     return (
-        <div className="flex flex-col gap-4 min-h-[calc(100vh-7rem)]">
-            <div className="flex-1 overflow-y-auto pr-1">
+        <div className={className}>
+            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
                 <div className="space-y-3">
                     {messages.map(message => {
                         const isUser = message.role === 'user';
+                        const judgePart = message.parts.find(
+                            part =>
+                                part.type === 'tool-judgeIsSushi' &&
+                                part.state === 'output-available' &&
+                                part.output,
+                        );
+                        const bubbleVariant = judgePart?.output?.isSushi
+                            ? 'chat-bubble-success'
+                            : judgePart
+                                ? 'chat-bubble-error'
+                                : '';
                         return (
                             <div key={message.id} className={`chat ${isUser ? 'chat-end' : 'chat-start'}`}>
                                 <div className="chat-header">
-                                    {isUser ? 'You' : 'AI'}
+                                    {isUser ? 'You' : 'Itamae'}
                                 </div>
-                                <div className="chat-bubble whitespace-pre-wrap">
+                                <div className={`chat-bubble whitespace-pre-wrap ${bubbleVariant}`}>
                                     {message.parts.map((part, index) => {
                                         if (part.type === 'text') {
-                                            return <p key={index}>{part.text}</p>;
+                                            return <p key={index} className="text-sm">{part.text}</p>;
                                         }
 
                                         if (part.type === 'tool-judgeIsSushi') {
@@ -184,21 +163,21 @@ export default function Chat({
                                         if (part.type === 'tool-createSushi') {
                                             if (part.state === 'output-available' && part.output) {
                                                 return (
-                                                    <div key={index} className="mt-3">
-                                                        <Sushi {...part.output} />
+                                                    <div key={index} className="text-sm">
+                                                        へいお待ち！
                                                     </div>
                                                 );
                                             }
                                             if (part.state === 'output-error') {
                                                 return (
                                                     <div key={index} className="text-sm text-error">
-                                                        生成に失敗しました: {part.errorText}
+                                                        握りに失敗しました: {part.errorText}
                                                     </div>
                                                 );
                                             }
                                             return (
                                                 <div key={index} className="text-sm text-base-content/70">
-                                                    生成中...
+                                                    握り中...
                                                 </div>
                                             );
                                         }
@@ -232,30 +211,32 @@ export default function Chat({
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="card bg-base-100 shadow-md border border-base-200 sticky bottom-0">
-                <div className="card-body gap-4">
-                    <textarea
-                        className="textarea textarea-bordered w-full"
-                        placeholder="反論しよう！！"
-                        value={input}
-                        onChange={e => setInput(e.target.value)}
-                        rows={3}
-                    />
-                    <div className="flex justify-end gap-2">
-                        <button
-                            type="button"
-                            className="btn btn-outline"
-                            onClick={handleRebuttal}
-                            disabled={pendingRebuttal}
-                        >
-                            {pendingRebuttal ? '生成中...' : 'AI反論'}
-                        </button>
-                        <button type="submit" className="btn btn-primary" >
-                            送信
-                        </button>
+            {!lastPositiveJudge?.output?.isSushi && (
+                <form onSubmit={handleSubmit} className="card bg-base-100 shadow-md border border-base-200">
+                    <div className="card-body gap-4">
+                        <textarea
+                            className="textarea textarea-bordered w-full"
+                            placeholder="反論しよう！！"
+                            value={input}
+                            onChange={e => setInput(e.target.value)}
+                            rows={3}
+                        />
+                        <div className="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                className="btn btn-outline"
+                                onClick={handleRebuttal}
+                                disabled={pendingRebuttal}
+                            >
+                                {pendingRebuttal ? '生成中...' : 'AI反論'}
+                            </button>
+                            <button type="submit" className="btn btn-primary" >
+                                送信
+                            </button>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            )}
         </div>
     );
 }

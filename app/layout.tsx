@@ -41,9 +41,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased`}
+        className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased h-dvh`}
       >
-        <div className="drawer lg:drawer-open min-h-screen">
+        <div className="drawer lg:drawer-open min-h-screen" overscroll-none>
           <input id="app-drawer" type="checkbox" className="drawer-toggle" />
           <div className="drawer-content flex flex-col min-h-screen">
             <div className="navbar bg-base-100 shadow-sm lg:hidden">
@@ -57,7 +57,7 @@ export default function RootLayout({
                 </label>
               </div>
             </div>
-            <main className="p-4">{children}</main>
+            <main className="p-4 h-full max-h-full">{children}</main>
           </div>
           <div className="drawer-side">
             <label htmlFor="app-drawer" aria-label="close sidebar" className="drawer-overlay"></label>

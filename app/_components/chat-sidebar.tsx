@@ -7,12 +7,9 @@ export async function ChatSidebar() {
 
     return (
         <ul className="menu bg-base-200 rounded-box w-full">
-            <li className="menu-title">
-                <span>作った寿司</span>
-            </li>
             {chats.length === 0 && (
                 <li className="text-base-content/70">
-                    <span>まだチャットがありません</span>
+                    <span>まだ寿司がありません</span>
                 </li>
             )}
             {chats.map(chat => (

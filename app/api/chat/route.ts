@@ -1,7 +1,6 @@
 import { streamText, convertToModelMessages, UIMessage, validateUIMessages } from 'ai';
 import { tools } from '@/lib/ai/tools';
 import { loadChat, saveChat } from '@/util/chat-store';
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 
 const systemPrompt = `You are a strict sushi gatekeeper assistant.
