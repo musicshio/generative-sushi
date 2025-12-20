@@ -58,6 +58,13 @@ export async function readOpfsObjectUrl(path: string) {
     return URL.createObjectURL(file);
 }
 
+export async function readOpfsFile(path: string) {
+    if (!isOpfsPath(path)) return null;
+    const handle = await getFileHandle(path, false);
+    if (!handle) return null;
+    return handle.getFile();
+}
+
 export function buildOpfsImagePath(chatId: string, key: string, dataUrl: string) {
     const ext = getExtensionFromDataUrl(dataUrl);
     return `${OPFS_PREFIX}sushi/${chatId}/${key}.${ext}`;

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Sushi } from '@/components/sushi';
 import ChatContent from '@/app/[id]/_components/chat-content';
 import { loadChat, saveChat } from '@/util/local-chat-store';
+import { isDataUrl, isOpfsPath, readOpfsFile } from '@/util/opfs';
 
 export type SushiDetailProps = {
     id: string;
@@ -15,6 +16,9 @@ export default function SushiDetail({
                                  id,
                              }: SushiDetailProps) {
     const [hydrated, setHydrated] = useState(false);
+    const [sharePending, setSharePending] = useState(false);
+    const [shareError, setShareError] = useState<string | null>(null);
+    const [shareUrl, setShareUrl] = useState<string | null>(null);
     const { messages, sendMessage, setMessages } = useChat({
         id,
         transport: new DefaultChatTransport({
@@ -120,6 +124,52 @@ export default function SushiDetail({
         return chatContent;
     }
 
+    const handleShare = async () => {
+        if (!latestSushi?.output || sharePending) return;
+        setSharePending(true);
+        setShareError(null);
+        setShareUrl(null);
+
+        try {
+            const payload = structuredClone(latestSushi.output) as { image?: string | null };
+            let imageFile: File | null = null;
+            let imageUrl: string | null = null;
+
+            if (payload.image && typeof payload.image === 'string') {
+                if (isOpfsPath(payload.image)) {
+                    const file = await readOpfsFile(payload.image);
+                    if (file) imageFile = file;
+                } else if (isDataUrl(payload.image)) {
+                    const blob = await fetch(payload.image).then(res => res.blob());
+                    const ext = blob.type.split('/')[1] || 'png';
+                    imageFile = new File([blob], `sushi.${ext}`, {
+                        type: blob.type || 'image/png',
+                    });
+                } else {
+                    imageUrl = payload.image;
+                }
+            }
+
+            const form = new FormData();
+            form.set('data', JSON.stringify({ ...payload, image: imageUrl }));
+            if (imageFile) {
+                form.set('image', imageFile);
+            }
+
+            const res = await fetch('/api/share', { method: 'POST', body: form });
+            if (!res.ok) {
+                throw new Error('Failed to share');
+            }
+            const data = (await res.json()) as { id: string };
+            setShareUrl(`${window.location.origin}/share/${data.id}`);
+        } catch (err) {
+            console.error(err);
+            setShareError('公開に失敗しました。もう一度お試しください。');
+        } finally {
+            setSharePending(false);
+        }
+    };
+
     return (
         <div className="flex flex-col lg:flex-row gap-4 h-full max-h-full">
             <div className="order-2 lg:order-1 flex-none w-full lg:w-96 h-full max-h-full border border-base-200 rounded lg:overflow-y-auto">
@@ -127,7 +177,33 @@ export default function SushiDetail({
             </div>
             <div className="order-1 lg:order-2 flex-1 min-h-0 overflow-y-auto">
                 {latestSushi?.output ? (
-                    <Sushi {...latestSushi.output} />
+                    <div className="space-y-4">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="text-sm font-semibold text-base-content/70">Wiki</div>
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-primary"
+                                onClick={handleShare}
+                                disabled={sharePending}
+                            >
+                                {sharePending ? '公開中...' : '公開する'}
+                            </button>
+                        </div>
+                        {shareUrl && (
+                            <div className="card bg-base-100 shadow-sm border border-base-200">
+                                <div className="card-body gap-2">
+                                    <div className="text-sm text-base-content/70">共有リンク</div>
+                                    <a href={shareUrl} className="link break-all" target="_blank" rel="noreferrer">
+                                        {shareUrl}
+                                    </a>
+                                </div>
+                            </div>
+                        )}
+                        {shareError && (
+                            <div className="text-sm text-error">{shareError}</div>
+                        )}
+                        <Sushi {...latestSushi.output} />
+                    </div>
                 ) : (
                     <div className="card bg-base-100 shadow-md border border-base-200">
                         <div className="card-body">

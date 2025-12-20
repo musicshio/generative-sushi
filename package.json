@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -13,6 +14,7 @@
     "@ai-sdk/react": "^2.0.115",
     "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
+    "@prisma/extension-accelerate": "^3.0.1",
     "@types/pg": "^8.16.0",
     "@vercel/blob": "^2.0.0",
     "ai": "^5.0.113",
