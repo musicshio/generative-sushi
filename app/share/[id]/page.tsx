@@ -8,7 +8,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     if (!shared) return notFound();
 
     return (
-        <div className="p-4">
+        <div className="p-4 bg-base-200">
             <Sushi {...(shared.data as Parameters<typeof Sushi>[0])} />
         </div>
     );

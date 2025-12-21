@@ -54,6 +54,10 @@ export default function SushiDetail({
     useEffect(() => {
         if (!hydrated) return;
         if (messages.length === 0) return;
+        const lastKey = `sushi:chat:lastCount:${id}`;
+        const lastCount = Number(window.localStorage.getItem(lastKey) ?? '0');
+        if (messages.length <= lastCount) return;
+        window.localStorage.setItem(lastKey, String(messages.length));
         void saveChat(id, messages);
     }, [hydrated, id, messages]);
 
@@ -206,20 +210,32 @@ export default function SushiDetail({
             </div>
             <div className="order-1 lg:order-2 flex-1 min-h-0 overflow-y-auto">
                 {latestSushi?.output ? (
-                    <div className="space-y-4">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    className="btn btn-sm btn-primary"
-                                    onClick={openShareModal}
+                    <Sushi
+                        {...latestSushi.output}
+                        headerActions={(
+                            <button
+                                type="button"
+                                className="btn btn-ghost"
+                                onClick={openShareModal}
+                            >
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    className="w-4 h-4"
                                 >
-                                    　Share
-                                </button>
-                            </div>
-                        </div>
-                        <Sushi {...latestSushi.output} />
-                    </div>
+                                    <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                                    <path d="M12 3v12" />
+                                    <path d="m8 7 4-4 4 4" />
+                                </svg>
+                                Share
+                            </button>
+                        )}
+                    />
                 ) : (
                     <div className="card bg-base-100 shadow-md border border-base-200">
                         <div className="card-body">
@@ -233,17 +249,18 @@ export default function SushiDetail({
                     <div className="text-lg font-semibold">公開設定</div>
                     {shareUrl ? (
                         <div className="space-y-3">
-                            <div className="text-sm text-base-content/70">共有リンク</div>
-                            <a href={shareUrl} className="link break-all" target="_blank" rel="noreferrer">
-                                {shareUrl}
-                            </a>
+                            <div>
+                                <a href={shareUrl} className="link break-all" target="_blank" rel="noreferrer">
+                                    {shareUrl}
+                                </a>
+                            </div>
                             <div className="flex justify-end gap-2">
-                                <button type="button" className="btn btn-outline" onClick={handleCopy}>
+                                <button type="button" className="btn btn-ghost" onClick={handleCopy}>
                                     コピー
                                 </button>
                                 <a
                                     href={shareUrl}
-                                    className="btn btn-primary"
+                                    className="btn"
                                     target="_blank"
                                     rel="noreferrer"
                                 >

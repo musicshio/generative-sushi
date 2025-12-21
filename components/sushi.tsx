@@ -6,7 +6,9 @@ import { sushiSchema } from "@/lib/schema/schema";
 import OpfsImage from '@/ui/opfs-image';
 import HeadingAnchor from '@/ui/heading-anchor';
 
-type SushiProps = z.infer<typeof sushiSchema>;
+type SushiProps = z.infer<typeof sushiSchema> & {
+    headerActions?: React.ReactNode;
+};
 
 export const Sushi = ({
     topping,
@@ -17,6 +19,7 @@ export const Sushi = ({
     recipe,
     history,
     image,
+    headerActions,
 }: SushiProps) => {
     const etymologyId = makeHeadingId(etymology.label, 'etymology');
     const historyId = makeHeadingId(history.label, 'history');
@@ -25,20 +28,25 @@ export const Sushi = ({
     return (
         <div className="p-4 md:p-6 lg:p-8 space-y-12">
             <div className="relative space-y-3">
-                    {image && (
-                        <div className="md:float-right md:ml-6 md:w-56 w-full mb-4 md:mb-2">
-                            <OpfsImage
-                                path={image}
-                                alt={`${topping} on ${base}`}
-                                className="w-full rounded-xl object-cover border border-base-200 shadow-sm"
-                            />
-                            <p className="text-xs text-base-content/70 mt-2 text-center">イメージ画像</p>
-                        </div>
-                    )}
                 <div className="space-y-2">
-                    <h1 className="text-2xl md:text-3xl font-semibold leading-tight">{title}</h1>
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                        <h1 className="text-2xl md:text-3xl font-semibold leading-tight">{title}</h1>
+                        {headerActions ? (
+                            <div className="flex items-center gap-2">{headerActions}</div>
+                        ) : null}
+                    </div>
                     <div className="h-px w-full bg-base-300" aria-hidden="true" />
                 </div>
+                {image && (
+                    <div className="md:float-right md:ml-6 md:w-56 w-full mb-4 md:mb-2">
+                        <OpfsImage
+                            path={image}
+                            alt={`${topping} on ${base}`}
+                            className="w-full rounded-xl object-cover border border-base-200 shadow-sm"
+                        />
+                        <p className="text-xs text-base-content/70 mt-2 text-center">イメージ画像</p>
+                    </div>
+                )}
                 <p className="text-base-content/80 leading-relaxed">{description}</p>
             </div>
 
