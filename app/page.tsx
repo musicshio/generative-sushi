@@ -40,13 +40,19 @@ export default function Page() {
     };
 
     return (
-        <div className="min-h-full flex items-center justify-center bg-base-200">
+        <div className="min-h-full flex items-center justify-center bg-base-200 p-2">
             <div className="card w-full max-w-4xl bg-base-100 shadow">
                 <div className="card-body gap-10">
                     <div className="space-y-4">
-                        <div className="space-y-2">
-                            <h1 className="text-xl font-semibold">これは寿司？</h1>
-                            <p className="text-sm text-base-content/70">寿司判定マンにきいてみよう！</p>
+                        <div className="space-y-4">
+                            <h1 className="text-2xl font-semibold">寿司ってなんだ？</h1>
+                            <div className="space-y-2">
+                                <p className="text-sm text-base-content/70">寿司かどうかなんて、本当は誰が決めてるんだろう。</p>
+                                <p className="text-sm text-base-content/70">ネタは魚じゃないといけない？</p>
+                                <p className="text-sm text-base-content/70">シャリは米じゃないといけない？</p>
+                                <p className="text-sm text-base-content/70">いやいや、寿司の可能性は無限大。</p>
+                                <p className="text-md font-bold text-base-content/70">これはもう寿司ってことになりませんかね？</p>
+                            </div>
                         </div>
                         <form onSubmit={handleSushiSubmit} className="space-y-4">
                             <div className="space-y-2">
