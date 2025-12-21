@@ -139,7 +139,11 @@ export default function SushiDetail({
     );
 
     if (!showSplit) {
-        return chatContent;
+        return <div className="flex flex-col lg:flex-row lg:gap-4 h-full max-h-full bg-base-200 p-4">
+            <div className="order-2 lg:order-1 flex-none w-full h-full max-h-full border border-base-200 rounded-box lg:overflow-y-auto bg-base-100">
+                {chatContent}
+            </div>
+        </div>
     }
 
     const openShareModal = () => {
@@ -264,14 +268,14 @@ export default function SushiDetail({
                                     target="_blank"
                                     rel="noreferrer"
                                 >
-                                    共有ページを開く
+                                    ページを開く
                                 </a>
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-3">
                             <p className="text-sm text-base-content/70">
-                                {sharePending ? '共有リンクを作成中...' : '共有リンクを準備しています。'}
+                                {sharePending ? 'リンクを作成中...' : 'リンクを準備しています。'}
                             </p>
                             {sharePending && (
                                 <div className="flex items-center gap-2">
