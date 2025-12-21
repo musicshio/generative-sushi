@@ -96,12 +96,16 @@ export function loadChat(id: string): UIMessage[] {
     }
 }
 
-export async function saveChat(id: string, messages: UIMessage[]) {
+export async function saveChat(
+    id: string,
+    messages: UIMessage[],
+    options?: { updatedAt?: number },
+) {
     if (typeof window === 'undefined') return;
     const processed = await replaceImagesWithOpfs(id, messages);
     window.localStorage.setItem(getChatKey(id), JSON.stringify(processed));
     const summary = extractSummary(processed);
-    const updatedAt = Date.now();
+    const updatedAt = options?.updatedAt ?? Date.now();
     const list = readChatList();
     const next = [
         { id, updatedAt, ...summary },
@@ -121,6 +125,11 @@ export function deleteChat(id: string) {
 export function listChats(): ChatSummary[] {
     if (typeof window === 'undefined') return [];
     return readChatList().sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
+export function getChatSummary(id: string): ChatSummary | undefined {
+    if (typeof window === 'undefined') return undefined;
+    return readChatList().find(chat => chat.id === id);
 }
 
 async function replaceImagesWithOpfs(id: string, messages: UIMessage[]) {

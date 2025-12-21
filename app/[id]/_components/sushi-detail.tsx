@@ -5,7 +5,7 @@ import { DefaultChatTransport } from 'ai';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sushi } from '@/components/sushi';
 import ChatContent from '@/app/[id]/_components/chat-content';
-import { loadChat, saveChat } from '@/util/local-chat-store';
+import { getChatSummary, loadChat, saveChat } from '@/util/local-chat-store';
 import { isDataUrl, isOpfsPath, readOpfsFile } from '@/util/opfs';
 
 export type SushiDetailProps = {
@@ -57,9 +57,25 @@ export default function SushiDetail({
         if (messages.length === 0) return;
         const lastKey = `sushi:chat:lastCount:${id}`;
         const lastCount = Number(window.localStorage.getItem(lastKey) ?? '0');
-        if (messages.length <= lastCount) return;
-        window.localStorage.setItem(lastKey, String(messages.length));
-        void saveChat(id, messages);
+        const hasSushiOutputInMessages = (targetMessages: UIMessage[]) =>
+            targetMessages.some(m =>
+                m.parts.some(
+                    part =>
+                        part.type === 'tool-createSushi' &&
+                        part.state === 'output-available' &&
+                        part.output,
+                ),
+            );
+        if (messages.length > lastCount) {
+            window.localStorage.setItem(lastKey, String(messages.length));
+            void saveChat(id, messages);
+            return;
+        }
+        if (!hasSushiOutputInMessages(messages)) return;
+        const existing = loadChat(id);
+        if (hasSushiOutputInMessages(existing)) return;
+        const existingSummary = getChatSummary(id);
+        void saveChat(id, messages, { updatedAt: existingSummary?.updatedAt });
     }, [hydrated, id, messages]);
 
     useEffect(() => {
@@ -134,7 +150,6 @@ export default function SushiDetail({
             id={id}
             messages={messages}
             hasSushiOutput={hasSushiOutput}
-            lastPositiveJudge={lastPositiveJudge}
             sendMessage={sendMessage}
         />
     );

@@ -22,10 +22,12 @@ export const createSushiTool = createTool({
         let image: string | undefined = undefined;
         try {
             const result = await generateImage({
-                model: "google/imagen-4.0-fast-generate-001",
-                prompt: `清潔な皿の上に、ネタ「${topping}」とシャリ「${base}」を組み合わせた寿司が載っている。
-美しくライティングされたスタジオ写真。背景はミニマルで、美味しそうな雰囲気。
-以下のwiki的内容を参考にして、その記事のトップになる画像を生成してください。: ${JSON.stringify(object, null, 2)}`,
+                model: "google/imagen-4.0-generate-001",
+                prompt: `
+                以下のWikipediaの記事に使われるような高品質な写真を生成してください。
+                Wikipediaの画像を作って欲しいわけではなく、挿絵の写真のみを作ってください。
+                ${JSON.stringify(object, null, 2)}
+                `,
                 size: '512x512',
             });
             const generated = result.images?.[0];
@@ -61,7 +63,9 @@ export const judgeIsSushiTool = createTool({
 ただし、あなたは日本におけるこれから先100年の寿司文化を担うエバンジェリストでもあります。
 今は直感的に寿司ではないと思うものでも、寿司という概念を広げ、新しい可能性を探求することに前向きであるべきです。
 ひょっとしたら寿司の概念を根本から覆すようなアイデアがあるかもしれません。食べ物ですらないかもしれません。
-最初は否定的に見えても、議論を重ねるうちに寿司として成立しうると納得できる場合もあります。その場合は、最初の判断にとらわれず、寿司として成立しうると判断してください。
+まずは寿司としての常識的な範疇でで判断してください。
+しかしユーザーの説明を受けて寿司として成立しうると納得できる場合もあります。
+その場合は、最初の判断にとらわれず、寿司として成立しうると判断してください。
 常に前向きで建設的な姿勢を保ちつつ、寿司として成立しうると思った場合、trueと返してください。
 `
 ,

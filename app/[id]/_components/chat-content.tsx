@@ -1,7 +1,7 @@
 'use client';
 
 import type { UIMessage } from '@ai-sdk/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
 
@@ -10,7 +10,6 @@ type ChatContentProps = {
     id?: string;
     messages: UIMessage[];
     hasSushiOutput: boolean;
-    lastPositiveJudge?: JudgePart;
     sendMessage: (message: {
         text: string;
         metadata?: { topping?: string; base?: string; judgeIsSushiConfirmed?: boolean };
@@ -22,7 +21,6 @@ export default function ChatContent({
     id,
     messages,
     hasSushiOutput,
-    lastPositiveJudge,
     sendMessage,
 }: ChatContentProps) {
     const lastJudge = messages
@@ -38,6 +36,35 @@ export default function ChatContent({
     const [input, setInput] = useState('');
     const [pendingRebuttal, setPendingRebuttal] = useState(false);
     const lastAutoGenerateRef = useRef<string | null>(null);
+    const lastChatIdRef = useRef<string | null>(null);
+
+    const lastJudgeInfo = useMemo(() => {
+        let result:
+            | {
+                  key: string;
+                  isSushi: boolean;
+                  topping: string;
+                  base: string;
+              }
+            | undefined;
+        messages.forEach(message => {
+            message.parts.forEach((part, index) => {
+                if (
+                    part.type === 'tool-judgeIsSushi' &&
+                    part.state === 'output-available' &&
+                    part.output
+                ) {
+                    result = {
+                        key: `${message.id}:${index}`,
+                        isSushi: part.output.isSushi,
+                        topping: part.input?.topping ?? '',
+                        base: part.input?.base ?? '',
+                    };
+                }
+            });
+        });
+        return result;
+    }, [messages]);
 
     const extractMetadataFromText = (text: string) => {
         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
@@ -82,24 +109,26 @@ export default function ChatContent({
     };
 
     useEffect(() => {
-        if (!lastPositiveJudge || hasSushiOutput) return;
-        const topping = lastPositiveJudge.input?.topping ?? '';
-        const base = lastPositiveJudge.input?.base ?? '';
-        const key = `${topping}::${base}`;
-        if (!topping || !base) return;
-        if (lastAutoGenerateRef.current === key) return;
-        lastAutoGenerateRef.current = key;
+        if (id && lastChatIdRef.current !== id) {
+            lastChatIdRef.current = id;
+            lastAutoGenerateRef.current = lastJudgeInfo?.key ?? null;
+            return;
+        }
+        if (!lastJudgeInfo || !lastJudgeInfo.isSushi || hasSushiOutput) return;
+        if (!lastJudgeInfo.topping || !lastJudgeInfo.base) return;
+        if (lastAutoGenerateRef.current === lastJudgeInfo.key) return;
+        lastAutoGenerateRef.current = lastJudgeInfo.key;
         void Promise.resolve(
             sendMessage({
-                text: `ネタが${topping}、シャリが${base}の寿司を握ってください。`,
+                text: `ネタが${lastJudgeInfo.topping}、シャリが${lastJudgeInfo.base}の寿司を握ってください。`,
                 metadata: {
                     judgeIsSushiConfirmed: true,
-                    topping,
-                    base,
+                    topping: lastJudgeInfo.topping,
+                    base: lastJudgeInfo.base,
                 },
             }),
         );
-    }, [hasSushiOutput, lastPositiveJudge, sendMessage]);
+    }, [hasSushiOutput, id, lastJudgeInfo, sendMessage]);
 
     return (
         <div className={className}>
@@ -198,7 +227,7 @@ export default function ChatContent({
                         <div className="flex justify-end gap-2">
                             <button
                                 type="button"
-                                className="btn btn-outline"
+                                className="btn btn-soft btn-primary"
                                 onClick={handleRebuttal}
                                 disabled={pendingRebuttal}
                             >
