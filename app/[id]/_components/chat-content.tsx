@@ -1,9 +1,21 @@
 'use client';
 
-import type { UIMessage } from '@ai-sdk/react';
+import {InferUITools, UIDataTypes, UIMessage} from 'ai';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { tools } from '@/lib/ai/tools';
 
-type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
+type UITools = InferUITools<typeof tools>;
+type ChatMessage = UIMessage<unknown, UIDataTypes, UITools>;
+type JudgePart = Extract<
+    ChatMessage['parts'][number],
+    { type: 'tool-judgeIsSushi'; output: { isSushi: boolean; reasoning: string } }
+>;
+
+const isJudgePart = (part: ChatMessage['parts'][number]): part is JudgePart =>
+    part.type === 'tool-judgeIsSushi' &&
+    part.state === 'output-available' &&
+    !!part.output &&
+    typeof (part.output as { isSushi?: unknown }).isSushi === 'boolean';
 
 type ChatContentProps = {
     className?: string;
@@ -23,7 +35,8 @@ export default function ChatContent({
     hasSushiOutput,
     sendMessage,
 }: ChatContentProps) {
-    const lastJudge = messages
+    const typedMessages = messages as ChatMessage[];
+    const lastJudge = typedMessages
         .flatMap(m => m.parts)
         .filter(
             (part): part is JudgePart =>
@@ -47,13 +60,9 @@ export default function ChatContent({
                   base: string;
               }
             | undefined;
-        messages.forEach(message => {
+        typedMessages.forEach(message => {
             message.parts.forEach((part, index) => {
-                if (
-                    part.type === 'tool-judgeIsSushi' &&
-                    part.state === 'output-available' &&
-                    part.output
-                ) {
+                if (isJudgePart(part)) {
                     result = {
                         key: `${message.id}:${index}`,
                         isSushi: part.output.isSushi,
@@ -64,7 +73,7 @@ export default function ChatContent({
             });
         });
         return result;
-    }, [messages]);
+    }, [typedMessages]);
 
     const extractMetadataFromText = (text: string) => {
         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
@@ -134,15 +143,10 @@ export default function ChatContent({
         <div className={className}>
             <div className="flex-1 min-h-0 overflow-y-auto lg:pr-2">
                 <div className="space-y-3 p-2 pb-6">
-                    {messages.map(message => {
+                    {typedMessages.map(message => {
                         const isUser = message.role === 'user';
-                        const judgePart = message.parts.find(
-                            part =>
-                                part.type === 'tool-judgeIsSushi' &&
-                                part.state === 'output-available' &&
-                                part.output,
-                        );
-                        const bubbleVariant = judgePart?.output?.isSushi
+                        const judgePart = message.parts.find(isJudgePart);
+                        const bubbleVariant = judgePart?.output.isSushi
                             ? 'chat-bubble-success'
                             : judgePart
                                 ? 'chat-bubble-error'

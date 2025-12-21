@@ -1,12 +1,14 @@
 'use client';
 
-import { UIMessage, useChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { useChat } from '@ai-sdk/react';
+import {DefaultChatTransport, UIDataTypes} from 'ai';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sushi } from '@/components/sushi';
 import ChatContent from '@/app/[id]/_components/chat-content';
 import { getChatSummary, loadChat, saveChat } from '@/util/local-chat-store';
 import { isDataUrl, isOpfsPath, readOpfsFile } from '@/util/opfs';
+import type { InferUITools, UIMessage } from 'ai';
+import type { tools } from '@/lib/ai/tools';
 
 export type SushiDetailProps = {
     id: string;
@@ -95,11 +97,13 @@ export default function SushiDetail({
         }
     }, [hydrated, id, sendMessage]);
 
-    type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
+    type UITools = InferUITools<typeof tools>;
+    type ChatMessage = UIMessage<unknown, UIDataTypes, UITools>;
+    type JudgePart = Extract<ChatMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
 
     const judgeParts: JudgePart[] = useMemo(
         () =>
-            messages
+            (messages as ChatMessage[])
                 .flatMap(m => m.parts)
                 .filter(
                     (part): part is JudgePart =>
@@ -116,12 +120,13 @@ export default function SushiDetail({
         [judgeParts],
     );
 
+    type CreateSushiPart = Extract<ChatMessage['parts'][number], { type: 'tool-createSushi' }>;
     const latestSushi = useMemo(
         () =>
-            messages
+            (messages as ChatMessage[])
                 .flatMap(m => m.parts)
                 .filter(
-                    (part): part is Extract<UIMessage['parts'][number], { type: 'tool-createSushi' }> =>
+                    (part): part is CreateSushiPart =>
                         part.type === 'tool-createSushi' &&
                         part.state === 'output-available' &&
                         !!part.output,
@@ -132,7 +137,7 @@ export default function SushiDetail({
 
     const hasSushiOutput = useMemo(
         () =>
-            messages.some(m =>
+            (messages as ChatMessage[]).some(m =>
                 m.parts.some(
                     part =>
                         part.type === 'tool-createSushi' &&

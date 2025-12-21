@@ -1,5 +1,7 @@
-import { UIMessage, generateId } from 'ai';
+import { UIDataTypes, UIMessage, generateId } from 'ai';
+import type { InferUITools } from 'ai';
 import { buildOpfsImagePath, isDataUrl, isOpfsPath, saveImageDataUrl } from '@/util/opfs';
+import type { tools } from '@/lib/ai/tools';
 
 export type ChatSummary = {
     id: string;
@@ -14,8 +16,10 @@ const CHAT_KEY_PREFIX = 'sushi:chat:';
 const CHAT_LIST_KEY = 'sushi:chat:list';
 const CHAT_EVENT = 'sushi-chat-storage';
 
-type TextPart = Extract<UIMessage['parts'][number], { type: 'text'; text: string }>;
-type CreateSushiPart = Extract<UIMessage['parts'][number], { type: 'tool-createSushi' }>;
+type UITools = InferUITools<typeof tools>;
+type ChatMessage = UIMessage<{ topping?: string; base?: string }, UIDataTypes, UITools>;
+type TextPart = Extract<ChatMessage['parts'][number], { type: 'text'; text: string }>;
+type CreateSushiPart = Extract<ChatMessage['parts'][number], { type: 'tool-createSushi' }>;
 
 function readChatList(): ChatSummary[] {
     if (typeof window === 'undefined') return [];
@@ -39,7 +43,7 @@ function getChatKey(id: string) {
     return `${CHAT_KEY_PREFIX}${id}`;
 }
 
-function extractSummary(messages: UIMessage[]): Omit<ChatSummary, 'id' | 'updatedAt'> {
+function extractSummary(messages: ChatMessage[]): Omit<ChatSummary, 'id' | 'updatedAt'> {
     const firstMessage = messages[0];
     const firstText = messages
         .flatMap(m => m.parts)
@@ -54,8 +58,8 @@ function extractSummary(messages: UIMessage[]): Omit<ChatSummary, 'id' | 'update
         );
 
     const imagePath = imagePart?.output?.image;
-    const metaTopping = firstMessage?.metadata && (firstMessage.metadata as { topping?: string }).topping;
-    const metaBase = firstMessage?.metadata && (firstMessage.metadata as { base?: string }).base;
+    const metaTopping = firstMessage?.metadata?.topping;
+    const metaBase = firstMessage?.metadata?.base;
     let preview: string | undefined;
     let topping: string | undefined;
     let base: string | undefined;
@@ -102,7 +106,7 @@ export async function saveChat(
     options?: { updatedAt?: number },
 ) {
     if (typeof window === 'undefined') return;
-    const processed = await replaceImagesWithOpfs(id, messages);
+    const processed = await replaceImagesWithOpfs(id, messages as ChatMessage[]);
     window.localStorage.setItem(getChatKey(id), JSON.stringify(processed));
     const summary = extractSummary(processed);
     const updatedAt = options?.updatedAt ?? Date.now();
@@ -132,8 +136,8 @@ export function getChatSummary(id: string): ChatSummary | undefined {
     return readChatList().find(chat => chat.id === id);
 }
 
-async function replaceImagesWithOpfs(id: string, messages: UIMessage[]) {
-    const cloned = structuredClone(messages) as UIMessage[];
+async function replaceImagesWithOpfs(id: string, messages: ChatMessage[]) {
+    const cloned = structuredClone(messages) as ChatMessage[];
     for (const message of cloned) {
         for (let index = 0; index < message.parts.length; index += 1) {
             const part = message.parts[index];

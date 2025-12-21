@@ -1,10 +1,14 @@
-import { generateText, UIMessage } from 'ai';
+import {generateText, UIDataTypes} from 'ai';
+import type { InferUITools, UIMessage } from 'ai';
+import type { tools } from '@/lib/ai/tools';
 
-type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
+type UITools = InferUITools<typeof tools>;
+type ChatMessage = UIMessage<unknown, UIDataTypes, UITools>;
+type JudgePart = Extract<ChatMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
 
 export async function POST(request: Request) {
     const req = await request.json();
-    const { messages } = req as { messages?: UIMessage[] };
+    const { messages } = req as { messages?: ChatMessage[] };
     if (!Array.isArray(messages) || messages.length === 0) {
         return new Response('Invalid messages', { status: 400 });
     }

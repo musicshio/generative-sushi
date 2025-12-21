@@ -26,7 +26,7 @@ export async function POST(request: Request) {
 
     const validatedMessages = await validateUIMessages({
         messages: inputMessages,
-        tools, // Ensures tool calls in messages match current schemas
+        tools: tools as any, // fixme
     }).catch((err) => {
         console.error('Message validation error:', JSON.stringify(err, null, 2));
         throw err;

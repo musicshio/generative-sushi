@@ -1,22 +1,10 @@
 import type { Metadata } from "next";
-import { Hina_Mincho, Geist_Mono, Mochiy_Pop_One, Shippori_Antique } from "next/font/google";
+import { Geist_Mono, Shippori_Antique } from "next/font/google";
 import "./globals.css";
 import Image from 'next/image'
 
 import { ChatSidebar } from "@/app/_components/chat-sidebar";
 import Link from "next/link";
-
-const hinaMincho = Hina_Mincho({
-  variable: "--font-hina-mincho",
-  weight: "400",
-  subsets: ["latin"],
-});
-
-const mochiyPop = Mochiy_Pop_One({
-  variable: "--font-mochiy-pop",
-  weight: "400",
-  subsets: ["latin"],
-});
 
 const shipporiAntique = Shippori_Antique({
   variable: "--font-shippori-antique",
@@ -42,7 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased h-dvh overscroll-none`}
+        className={`${shipporiAntique.variable} ${geistMono.variable} antialiased h-dvh overscroll-none`}
       >
         <div className="drawer lg:drawer-open h-dvh overflow-hidden">
           <input id="app-drawer" type="checkbox" className="drawer-toggle" />
@@ -55,7 +43,7 @@ export default function RootLayout({
               </div>
               <div className="flex-1">
                 <Link href="/">
-                  <Image src="/logo.svg" alt="logo" width={180} height={40} />
+                  <Image src="/sushi.svg" alt="logo" width={180} height={40} />
                 </Link>
               </div>
             </div>
@@ -66,7 +54,7 @@ export default function RootLayout({
             <aside className="h-dvh w-80 p-4 overflow-y-auto bg-base-100">
               <div className="flex items-center justify-between mb-4">
                 <Link href="/">
-                  <Image src="/logo.svg" alt="logo" width={270} height={60}  />
+                  <Image src="/sushi.svg" alt="logo" width={270} height={60}  />
                 </Link>
                 <label htmlFor="app-drawer" className="btn btn-ghost btn-square lg:hidden">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none"
