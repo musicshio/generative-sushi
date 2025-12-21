@@ -25,7 +25,8 @@ export default function SushiDetail({
         transport: new DefaultChatTransport({
             api: '/api/chat',
             prepareSendMessagesRequest({ messages, id }) {
-                return { body: { messages, id } };
+                const last = messages[messages.length - 1];
+                return { body: { messages, id, requestMetadata: last?.metadata } };
             },
         }),
     });

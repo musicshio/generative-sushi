@@ -11,7 +11,10 @@ type ChatContentProps = {
     messages: UIMessage[];
     hasSushiOutput: boolean;
     lastPositiveJudge?: JudgePart;
-    sendMessage: (message: { text: string; metadata?: { topping?: string; base?: string } }) => Promise<void> | void;
+    sendMessage: (message: {
+        text: string;
+        metadata?: { topping?: string; base?: string; judgeIsSushiConfirmed?: boolean };
+    }) => Promise<void> | void;
 };
 
 export default function ChatContent({
@@ -84,7 +87,12 @@ export default function ChatContent({
         const base = lastPositiveJudge.input?.base;
         setPendingGenerate(true);
         sendMessage({
-            text: `judgeIsSushiでOKが出たので生成してください。\nTopping: ${topping ?? ''}\nBase: ${base ?? ''}`,
+            text: `ネタが${topping ?? ''}、シャリが${base ?? ''}の寿司を握ってください。`,
+            metadata: {
+                judgeIsSushiConfirmed: true,
+                topping,
+                base,
+            },
         }).finally(() => setPendingGenerate(false));
     };
 

@@ -23,7 +23,9 @@ export const createSushiTool = createTool({
         try {
             const result = await generateImage({
                 model: "google/imagen-4.0-fast-generate-001",
-                prompt: `清潔な皿の上に、トッピング「${topping}」をのせたベース「${base}」の寿司。美しくライティングされたスタジオ写真。背景はミニマルで、美味しそうな雰囲気。詳細: ${JSON.stringify(object, null, 2)}`,
+                prompt: `清潔な皿の上に、ネタ「${topping}」とシャリ「${base}」を組み合わせた寿司が載っている。
+美しくライティングされたスタジオ写真。背景はミニマルで、美味しそうな雰囲気。
+以下の内容のwikiのトップに乗る画像: ${JSON.stringify(object, null, 2)}`,
                 size: '512x512',
             });
             const generated = result.images?.[0];

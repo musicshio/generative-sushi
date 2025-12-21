@@ -9,12 +9,20 @@ const systemPrompt = `You are a strict sushi gatekeeper assistant.
 
 export async function POST(request: Request) {
     const req = await request.json();
-    const { messages, message } = req as {
+    const { messages, message, requestMetadata } = req as {
         id?: string;
         messages?: UIMessage[];
         message?: UIMessage;
+        requestMetadata?: { judgeIsSushiConfirmed?: boolean; topping?: string; base?: string };
     };
     const inputMessages = messages ?? (message ? [message] : []);
+    const lastMessage = inputMessages[inputMessages.length - 1];
+    const meta =
+        (lastMessage?.metadata as { judgeIsSushiConfirmed?: boolean; topping?: string; base?: string } | undefined) ??
+        requestMetadata;
+    const systemNote = meta?.judgeIsSushiConfirmed
+        ? `\n- Note: judgeIsSushi has already returned true for this request (Topping: ${meta.topping ?? ''}, Base: ${meta.base ?? ''}). Proceed directly to createSushi.`
+        : '';
 
     const validatedMessages = await validateUIMessages({
         messages: inputMessages,
@@ -26,7 +34,7 @@ export async function POST(request: Request) {
 
     const result = streamText({
         model: 'openai/gpt-5-mini',
-        system: systemPrompt,
+        system: systemPrompt + systemNote,
         messages: convertToModelMessages(validatedMessages),
         tools,
     });
