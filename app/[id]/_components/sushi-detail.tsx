@@ -2,7 +2,7 @@
 
 import { UIMessage, useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Sushi } from '@/components/sushi';
 import ChatContent from '@/app/[id]/_components/chat-content';
 import { loadChat, saveChat } from '@/util/local-chat-store';
@@ -19,6 +19,7 @@ export default function SushiDetail({
     const [sharePending, setSharePending] = useState(false);
     const [shareError, setShareError] = useState<string | null>(null);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
+    const shareModalRef = useRef<HTMLDialogElement | null>(null);
     const { messages, sendMessage, setMessages } = useChat({
         id,
         transport: new DefaultChatTransport({
@@ -36,6 +37,19 @@ export default function SushiDetail({
         }
         setHydrated(true);
     }, [id, setMessages]);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const stored = window.localStorage.getItem(`sushi:share:${id}`);
+        if (stored) {
+            setShareUrl(stored);
+        }
+    }, [id]);
+
+    useEffect(() => {
+        if (!shareUrl || typeof window === 'undefined') return;
+        window.localStorage.setItem(`sushi:share:${id}`, shareUrl);
+    }, [id, shareUrl]);
 
     useEffect(() => {
         if (!hydrated) return;
@@ -124,11 +138,26 @@ export default function SushiDetail({
         return chatContent;
     }
 
+    const openShareModal = () => {
+        shareModalRef.current?.showModal();
+        if (!shareUrl && latestSushi?.output && !sharePending) {
+            void handleShare();
+        }
+    };
+
+    const handleCopy = async () => {
+        if (!shareUrl) return;
+        try {
+            await navigator.clipboard.writeText(shareUrl);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
     const handleShare = async () => {
         if (!latestSushi?.output || sharePending) return;
         setSharePending(true);
         setShareError(null);
-        setShareUrl(null);
 
         try {
             const payload = structuredClone(latestSushi.output) as { image?: string | null };
@@ -179,39 +208,70 @@ export default function SushiDetail({
                 {latestSushi?.output ? (
                     <div className="space-y-4">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="text-sm font-semibold text-base-content/70">Wiki</div>
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-primary"
-                                onClick={handleShare}
-                                disabled={sharePending}
-                            >
-                                {sharePending ? '公開中...' : '公開する'}
-                            </button>
-                        </div>
-                        {shareUrl && (
-                            <div className="card bg-base-100 shadow-sm border border-base-200">
-                                <div className="card-body gap-2">
-                                    <div className="text-sm text-base-content/70">共有リンク</div>
-                                    <a href={shareUrl} className="link break-all" target="_blank" rel="noreferrer">
-                                        {shareUrl}
-                                    </a>
-                                </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-primary"
+                                    onClick={openShareModal}
+                                >
+                                    　Share
+                                </button>
                             </div>
-                        )}
-                        {shareError && (
-                            <div className="text-sm text-error">{shareError}</div>
-                        )}
+                        </div>
                         <Sushi {...latestSushi.output} />
                     </div>
                 ) : (
                     <div className="card bg-base-100 shadow-md border border-base-200">
                         <div className="card-body">
-                            <p className="text-sm text-base-content/70">寿司wikiを生成中...</p>
+                            <p className="text-sm text-base-content/70">寿司を握っています...</p>
                         </div>
                     </div>
                 )}
             </div>
+            <dialog ref={shareModalRef} className="modal">
+                <div className="modal-box space-y-4">
+                    <div className="text-lg font-semibold">公開設定</div>
+                    {shareUrl ? (
+                        <div className="space-y-3">
+                            <div className="text-sm text-base-content/70">共有リンク</div>
+                            <a href={shareUrl} className="link break-all" target="_blank" rel="noreferrer">
+                                {shareUrl}
+                            </a>
+                            <div className="flex justify-end gap-2">
+                                <button type="button" className="btn btn-outline" onClick={handleCopy}>
+                                    コピー
+                                </button>
+                                <a
+                                    href={shareUrl}
+                                    className="btn btn-primary"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    共有ページを開く
+                                </a>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            <p className="text-sm text-base-content/70">
+                                {sharePending ? '共有リンクを作成中...' : '共有リンクを準備しています。'}
+                            </p>
+                            {sharePending && (
+                                <div className="flex items-center gap-2">
+                                    <span className="loading loading-spinner loading-sm" aria-hidden />
+                                    <span className="text-sm text-base-content/60">生成中</span>
+                                </div>
+                            )}
+                            {shareError && (
+                                <div className="text-sm text-error">{shareError}</div>
+                            )}
+                        </div>
+                    )}
+                </div>
+                <form method="dialog" className="modal-backdrop">
+                    <button type="submit">close</button>
+                </form>
+            </dialog>
         </div>
     );
 }
