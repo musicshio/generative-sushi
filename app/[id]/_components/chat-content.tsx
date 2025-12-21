@@ -22,6 +22,16 @@ export default function ChatContent({
     lastPositiveJudge,
     sendMessage,
 }: ChatContentProps) {
+    const lastJudge = messages
+        .flatMap(m => m.parts)
+        .filter(
+            (part): part is JudgePart =>
+                part.type === 'tool-judgeIsSushi' &&
+                part.state === 'output-available' &&
+                !!part.output,
+        )
+        .pop();
+
     const [input, setInput] = useState('');
     const [pendingGenerate, setPendingGenerate] = useState(false);
     const [pendingRebuttal, setPendingRebuttal] = useState(false);
@@ -46,50 +56,21 @@ export default function ChatContent({
 
     const handleRebuttal = async () => {
         setPendingRebuttal(true);
-        const topping = lastPositiveJudge?.input?.topping ?? '';
-        const base = lastPositiveJudge?.input?.base ?? '';
         try {
-            const res = await fetch('/api/chat', {
+            const res = await fetch('/api/rebuttal', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    id,
-                    message: {
-                        id: 'rebuttal-system',
-                        role: 'user',
-                        parts: [
-                            {
-                                type: 'text',
-                                text: `以下の判定に反論する文章を、創作寿司を肯定する立場で短く書いてください。\nTopping: ${topping}\nBase: ${base}`,
-                            },
-                        ],
-                    },
-                }),
+                body: JSON.stringify({ messages }),
             });
-
-            const text = await res.text();
-            // naive parse: take last chunk after "data: "
-            const lines = text.trim().split('\n').filter(l => l.startsWith('data:'));
-            const last = lines[lines.length - 1]?.replace(/^data:\s*/, '');
-            let rebuttal = '';
-            if (last) {
-                try {
-                    const parsed = JSON.parse(last);
-                    const part = parsed.message?.parts?.find(
-                        (p: { type?: string; text?: string }) => p?.type === 'text',
-                    );
-                    rebuttal = part?.text ?? '';
-                } catch {
-                    rebuttal = '';
-                }
+            if (!res.ok) {
+                throw new Error('Failed to rebut');
             }
-
-            const basePrompt =
-                'AI判定に反論します。創作寿司として成立するはずだと主張します。食用として安全で、創造的・融合的な寿司として成立すると説得します。';
-            const composed = rebuttal || basePrompt;
-            setInput(
-                `AI判定に反論します。\nTopping: ${topping}\nBase: ${base}\nUser arguments: ${composed}`,
-            );
+            const data = (await res.json()) as { text?: string };
+            const rebuttal = data.text?.trim();
+            if (!rebuttal) {
+                throw new Error('Empty rebuttal');
+            }
+            await sendMessage({ text: rebuttal });
         } catch (err) {
             console.error(err);
         } finally {
@@ -211,7 +192,7 @@ export default function ChatContent({
                 </div>
             )}
 
-            {!lastPositiveJudge?.output?.isSushi && (
+            {lastJudge?.output?.isSushi === false && (
                 <form onSubmit={handleSubmit} className="card bg-base-100 shadow-md border border-base-200">
                     <div className="card-body gap-4">
                         <textarea
@@ -228,7 +209,7 @@ export default function ChatContent({
                                 onClick={handleRebuttal}
                                 disabled={pendingRebuttal}
                             >
-                                {pendingRebuttal ? '生成中...' : 'AI反論'}
+                                {pendingRebuttal ? '反論中...' : 'AI反論'}
                             </button>
                             <button type="submit" className="btn btn-primary" >
                                 送信
