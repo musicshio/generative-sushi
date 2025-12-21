@@ -25,7 +25,7 @@ export const createSushiTool = createTool({
                 model: "google/imagen-4.0-fast-generate-001",
                 prompt: `清潔な皿の上に、ネタ「${topping}」とシャリ「${base}」を組み合わせた寿司が載っている。
 美しくライティングされたスタジオ写真。背景はミニマルで、美味しそうな雰囲気。
-以下の内容のwikiのトップに乗る画像: ${JSON.stringify(object, null, 2)}`,
+以下のwiki的内容を参考にして、その記事のトップになる画像を生成してください。: ${JSON.stringify(object, null, 2)}`,
                 size: '512x512',
             });
             const generated = result.images?.[0];

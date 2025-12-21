@@ -21,7 +21,7 @@ export default function Page() {
                 id: generateId(),
                 role: 'user',
                 metadata: { topping, base },
-                parts: [{ type: 'text', text: `${topping}に${base}を乗せたものは寿司ではないでしょうか？` }],
+                parts: [{ type: 'text', text: `${topping}を${base}に乗せたものは寿司ではないでしょうか？` }],
             };
 
             window.sessionStorage.setItem(

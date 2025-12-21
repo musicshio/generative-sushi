@@ -1,7 +1,7 @@
 'use client';
 
 import type { UIMessage } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type JudgePart = Extract<UIMessage['parts'][number], { type: 'tool-judgeIsSushi' }>;
 
@@ -36,8 +36,8 @@ export default function ChatContent({
         .pop();
 
     const [input, setInput] = useState('');
-    const [pendingGenerate, setPendingGenerate] = useState(false);
     const [pendingRebuttal, setPendingRebuttal] = useState(false);
+    const lastAutoGenerateRef = useRef<string | null>(null);
 
     const extractMetadataFromText = (text: string) => {
         const toppingMatch = text.match(/Topping:\s*([^\n]+)/i);
@@ -81,20 +81,25 @@ export default function ChatContent({
         }
     };
 
-    const handleGenerateClick = () => {
-        if (!lastPositiveJudge) return;
-        const topping = lastPositiveJudge.input?.topping;
-        const base = lastPositiveJudge.input?.base;
-        setPendingGenerate(true);
-        sendMessage({
-            text: `ネタが${topping ?? ''}、シャリが${base ?? ''}の寿司を握ってください。`,
-            metadata: {
-                judgeIsSushiConfirmed: true,
-                topping,
-                base,
-            },
-        }).finally(() => setPendingGenerate(false));
-    };
+    useEffect(() => {
+        if (!lastPositiveJudge || hasSushiOutput) return;
+        const topping = lastPositiveJudge.input?.topping ?? '';
+        const base = lastPositiveJudge.input?.base ?? '';
+        const key = `${topping}::${base}`;
+        if (!topping || !base) return;
+        if (lastAutoGenerateRef.current === key) return;
+        lastAutoGenerateRef.current = key;
+        void Promise.resolve(
+            sendMessage({
+                text: `ネタが${topping}、シャリが${base}の寿司を握ってください。`,
+                metadata: {
+                    judgeIsSushiConfirmed: true,
+                    topping,
+                    base,
+                },
+            }),
+        );
+    }, [hasSushiOutput, lastPositiveJudge, sendMessage]);
 
     return (
         <div className={className}>
@@ -179,26 +184,6 @@ export default function ChatContent({
                     })}
                 </div>
             </div>
-
-            {!hasSushiOutput && lastPositiveJudge && (
-                <div className="card bg-base-100 border border-base-200 shadow-sm">
-                    <div className="card-body gap-3">
-                        <p className="text-sm text-base-content/80">
-                            判定OKです。生成を実行しますか？
-                        </p>
-                        <div className="flex justify-end">
-                            <button
-                                type="button"
-                                className="btn btn-primary"
-                                onClick={handleGenerateClick}
-                                disabled={pendingGenerate}
-                            >
-                                {pendingGenerate ? 'Generating...' : '生成する'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {lastJudge?.output?.isSushi === false && (
                 <form onSubmit={handleSubmit} className="card bg-base-100 shadow-md border border-base-200">
