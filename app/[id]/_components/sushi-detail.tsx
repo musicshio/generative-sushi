@@ -16,6 +16,7 @@ export default function SushiDetail({
                                  id,
                              }: SushiDetailProps) {
     const [hydrated, setHydrated] = useState(false);
+    const [activeTab, setActiveTab] = useState<'wiki' | 'chat'>('wiki');
     const [sharePending, setSharePending] = useState(false);
     const [shareError, setShareError] = useState<string | null>(null);
     const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -224,45 +225,97 @@ export default function SushiDetail({
     };
 
     return (
-        <div className="flex flex-col lg:flex-row lg:gap-4 h-full max-h-full bg-base-200 p-4">
-            <div className="order-2 lg:order-1 flex-none w-full lg:w-96 h-full max-h-full border border-base-200 rounded-box lg:overflow-y-auto bg-base-100">
-                {chatContent}
-            </div>
-            <div className="order-1 lg:order-2 flex-1 min-h-0 overflow-y-auto">
-                {latestSushi?.output ? (
-                    <Sushi
-                        {...latestSushi.output}
-                        headerActions={(
-                            <button
-                                type="button"
-                                className="btn btn-ghost"
-                                onClick={openShareModal}
-                            >
-                                <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    className="w-4 h-4"
-                                >
-                                    <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
-                                    <path d="M12 3v12" />
-                                    <path d="m8 7 4-4 4 4" />
-                                </svg>
-                                Share
-                            </button>
-                        )}
-                    />
-                ) : (
-                    <div className="card bg-base-100 shadow-md border border-base-200">
-                        <div className="card-body">
-                            <p className="text-sm text-base-content/70">寿司を握っています...</p>
+        <div className="flex flex-col h-full bg-base-200">
+            <div className="lg:hidden h-full relative">
+                <div className="tabs tabs-box sticky top-0 p-2 z-10">
+                    <input type="radio" name="my_tabs_1" className="tab" aria-label="Wiki" defaultChecked onClick={() => setActiveTab('wiki')} />
+                    <input type="radio" name="my_tabs_1" className="tab" aria-label="Chat" onClick={() => setActiveTab('chat')} />
+                </div>
+                <div className="flex-1 h-[calc(100%-56px)] p-2">
+                    {activeTab === 'chat' ? (
+                        <div className="h-full border border-base-200 rounded-box bg-base-100 overflow-y-auto">
+                            {chatContent}
                         </div>
-                    </div>
-                )}
+                    ) : (
+                        <div className="h-full overflow-y-auto">
+                            {latestSushi?.output ? (
+                                <Sushi
+                                    {...latestSushi.output}
+                                    headerActions={(
+                                        <button
+                                            type="button"
+                                            className="btn btn-ghost"
+                                            onClick={openShareModal}
+                                        >
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                className="w-4 h-4"
+                                            >
+                                                <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                                                <path d="M12 3v12" />
+                                                <path d="m8 7 4-4 4 4" />
+                                            </svg>
+                                            Share
+                                        </button>
+                                    )}
+                                />
+                            ) : (
+                                <div className="card bg-base-100 shadow-md border border-base-200">
+                                    <div className="card-body">
+                                        <p className="text-sm text-base-content/70">寿司を握っています...</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+            <div className="hidden lg:flex lg:flex-row lg:gap-4 h-full max-h-full p-4">
+                <div className="order-2 lg:order-1 flex-none w-full lg:w-96 h-full max-h-full border border-base-200 rounded-box lg:overflow-y-auto bg-base-100">
+                    {chatContent}
+                </div>
+                <div className="order-1 lg:order-2 flex-1 min-h-0 overflow-y-auto">
+                    {latestSushi?.output ? (
+                        <Sushi
+                            {...latestSushi.output}
+                            headerActions={(
+                                <button
+                                    type="button"
+                                    className="btn btn-ghost"
+                                    onClick={openShareModal}
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        className="w-4 h-4"
+                                    >
+                                        <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+                                        <path d="M12 3v12" />
+                                        <path d="m8 7 4-4 4 4" />
+                                    </svg>
+                                    Share
+                                </button>
+                            )}
+                        />
+                    ) : (
+                        <div className="card bg-base-100 shadow-md border border-base-200">
+                            <div className="card-body">
+                                <p className="text-sm text-base-content/70">寿司を握っています...</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
             <dialog ref={shareModalRef} className="modal">
                 <div className="modal-box space-y-4">
