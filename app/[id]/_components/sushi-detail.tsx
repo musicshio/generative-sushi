@@ -200,8 +200,8 @@ export default function SushiDetail({
     };
 
     return (
-        <div className="flex flex-col lg:flex-row gap-4 h-full max-h-full">
-            <div className="order-2 lg:order-1 flex-none w-full lg:w-96 h-full max-h-full border border-base-200 rounded lg:overflow-y-auto">
+        <div className="flex flex-col lg:flex-row lg:gap-4 h-full max-h-full bg-base-200 p-4">
+            <div className="order-2 lg:order-1 flex-none w-full lg:w-96 h-full max-h-full border border-base-200 rounded-box lg:overflow-y-auto bg-base-100">
                 {chatContent}
             </div>
             <div className="order-1 lg:order-2 flex-1 min-h-0 overflow-y-auto">

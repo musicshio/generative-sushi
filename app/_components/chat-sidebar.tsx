@@ -16,7 +16,7 @@ export function ChatSidebar() {
     }, []);
 
     return (
-        <ul className="menu bg-base-200 rounded-box w-full">
+        <ul className="menu w-full">
             {chats.length === 0 && (
                 <li className="text-base-content/70">
                     <span>まだ寿司がありません</span>

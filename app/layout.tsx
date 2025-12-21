@@ -41,11 +41,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased`}
+        className={`${hinaMincho.variable} ${mochiyPop.variable} ${shipporiAntique.variable} ${geistMono.variable} antialiased h-dvh overscroll-none`}
       >
-        <div className="drawer lg:drawer-open min-h-screen max-h-screen">
+        <div className="drawer lg:drawer-open h-dvh overflow-hidden">
           <input id="app-drawer" type="checkbox" className="drawer-toggle" />
-          <div className="drawer-content flex flex-col min-h-screen max-h-screen">
+          <div className="drawer-content flex flex-col h-dvh min-h-0">
             <div className="navbar bg-base-100 shadow-sm lg:hidden sticky top-0 z-10">
               <div className="flex-nome">
                 <label htmlFor="app-drawer" className="btn btn-ghost btn-square">
@@ -56,11 +56,11 @@ export default function RootLayout({
                 <Link href="/" className="text-xl font-semibold">Generative sUshI</Link>
               </div>
             </div>
-            <main className="p-4 h-full max-h-full">{children}</main>
+            <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
           </div>
-          <div className="drawer-side">
+          <div className="drawer-side h-dvh">
             <label htmlFor="app-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
-            <aside className="min-h-full w-80 bg-base-200 p-4">
+            <aside className="h-dvh w-80 p-4 overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <Link href="/" className="text-xl font-semibold">Generative sUshI</Link>
                 <label htmlFor="app-drawer" className="btn btn-ghost btn-square lg:hidden">

@@ -109,8 +109,8 @@ export default function ChatContent({
 
     return (
         <div className={className}>
-            <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-                <div className="space-y-3">
+            <div className="flex-1 min-h-0 overflow-y-auto lg:pr-2">
+                <div className="space-y-3 p-2 pb-6">
                     {messages.map(message => {
                         const isUser = message.role === 'user';
                         const judgePart = message.parts.find(
