@@ -20,6 +20,26 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "これはもう寿司ってことになりませんかね？",
   description: "寿司判定AIとチャットしながら、あなただけの寿司を作ろう！",
+  openGraph: {
+    title: "これはもう寿司ってことになりませんかね？",
+    description: "寿司判定AIとチャットしながら、あなただけの寿司を作ろう！",
+    type: "website",
+    locale: "ja_JP",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "寿司判定AIとチャットしながら寿司を作るアプリ",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "これはもう寿司ってことになりませんかね？",
+    description: "寿司判定AIとチャットしながら、あなただけの寿司を作ろう！",
+    images: ["/opengraph-image"],
+  },
 };
 
 export default function RootLayout({
